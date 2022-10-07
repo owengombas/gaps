@@ -14,6 +14,11 @@
 		5AEC631B28ED85A5001AEE3D /* gapsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC631A28ED85A5001AEE3D /* gapsTests.swift */; };
 		5AEC632528ED85A5001AEE3D /* gapsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC632428ED85A5001AEE3D /* gapsUITests.swift */; };
 		5AEC632728ED85A5001AEE3D /* gapsUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC632628ED85A5001AEE3D /* gapsUITestsLaunchTests.swift */; };
+		5AEC633528ED9B32001AEE3D /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633428ED9B32001AEE3D /* Card.swift */; };
+		5AEC633728ED9B98001AEE3D /* CardColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633628ED9B98001AEE3D /* CardColors.swift */; };
+		5AEC633928ED9C64001AEE3D /* CardNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633828ED9C64001AEE3D /* CardNumbers.swift */; };
+		5AEC633B28ED9D66001AEE3D /* Game.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633A28ED9D66001AEE3D /* Game.swift */; };
+		5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633C28ED9DD9001AEE3D /* Matrix.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,6 +50,11 @@
 		5AEC632028ED85A5001AEE3D /* gapsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = gapsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AEC632428ED85A5001AEE3D /* gapsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gapsUITests.swift; sourceTree = "<group>"; };
 		5AEC632628ED85A5001AEE3D /* gapsUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gapsUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		5AEC633428ED9B32001AEE3D /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
+		5AEC633628ED9B98001AEE3D /* CardColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColors.swift; sourceTree = "<group>"; };
+		5AEC633828ED9C64001AEE3D /* CardNumbers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardNumbers.swift; sourceTree = "<group>"; };
+		5AEC633A28ED9D66001AEE3D /* Game.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Game.swift; sourceTree = "<group>"; };
+		5AEC633C28ED9DD9001AEE3D /* Matrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Matrix.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +105,7 @@
 		5AEC630728ED85A4001AEE3D /* gaps */ = {
 			isa = PBXGroup;
 			children = (
+				5AEC633328ED9B23001AEE3D /* logic */,
 				5AEC630828ED85A4001AEE3D /* gapsApp.swift */,
 				5AEC630A28ED85A4001AEE3D /* ContentView.swift */,
 				5AEC630C28ED85A5001AEE3D /* Assets.xcassets */,
@@ -127,6 +138,18 @@
 				5AEC632628ED85A5001AEE3D /* gapsUITestsLaunchTests.swift */,
 			);
 			path = gapsUITests;
+			sourceTree = "<group>";
+		};
+		5AEC633328ED9B23001AEE3D /* logic */ = {
+			isa = PBXGroup;
+			children = (
+				5AEC633428ED9B32001AEE3D /* Card.swift */,
+				5AEC633628ED9B98001AEE3D /* CardColors.swift */,
+				5AEC633828ED9C64001AEE3D /* CardNumbers.swift */,
+				5AEC633A28ED9D66001AEE3D /* Game.swift */,
+				5AEC633C28ED9DD9001AEE3D /* Matrix.swift */,
+			);
+			path = logic;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -259,8 +282,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */,
 				5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */,
+				5AEC633B28ED9D66001AEE3D /* Game.swift in Sources */,
+				5AEC633728ED9B98001AEE3D /* CardColors.swift in Sources */,
+				5AEC633528ED9B32001AEE3D /* Card.swift in Sources */,
 				5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */,
+				5AEC633928ED9C64001AEE3D /* CardNumbers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
