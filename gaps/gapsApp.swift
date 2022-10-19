@@ -14,4 +14,10 @@ struct gapsApp: App {
             ContentView()
         }
     }
+    
+    static func main() throws {
+        let s = State()
+        s.removeRandomlyNCards(n: 4)
+        print(s)
+    }
 }

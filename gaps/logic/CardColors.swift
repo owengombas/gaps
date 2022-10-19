@@ -7,9 +7,9 @@
 
 import Foundation
 
-enum CardColors {
-    case CLUB       // ♣
-    case DIAMOND    // ♦
-    case HEART      // ♥
-    case SPADE      // ♠
+enum CardColors: Int, CaseIterable {
+    case CLUB    = 0    // ♣
+    case DIAMOND = 13   // ♦
+    case HEART   = 26   // ♥
+    case SPADE   = 39   // ♠
 }

@@ -7,17 +7,18 @@
 
 import Foundation
 
-enum CardNumbers {
-    case TWO
-    case THREE
-    case FOUR
-    case FIVE
-    case SIX
-    case SEVEN
-    case EIGHT
-    case NINE
-    case TEN
-    case JACK
-    case QUEEN
-    case KING
+enum CardNumbers: Int {
+    case ACE    = 0
+    case TWO    = 1
+    case THREE  = 2
+    case FOUR   = 3
+    case FIVE   = 4
+    case SIX    = 5
+    case SEVEN  = 6
+    case EIGHT  = 7
+    case NINE   = 8
+    case TEN    = 9
+    case JACK   = 10
+    case QUEEN  = 11
+    case KING   = 12
 }
