@@ -35,24 +35,12 @@ class State: Matrix<Card?> {
         return s
     }
     
-    func removeRandomly() -> Int {
+    func removeRandomly(notAround: Int) -> Int {
         var toRemove: Card? = nil
         var posIndex: Int = -1
         
-        while toRemove == nil {
-            let newPosNumber = Int.random(in: 0..<self.capacity)
-            
-//            let newPos = getPositionFrom(index: newPosNumber)
-//
-//            let prevElement: Card? = self.getElement(i: newPos.0 + 1, j: newPos.1)
-//            let nextElement: Card? = self.getElement(i: newPos.0 - 1, j: newPos.1)
-//
-//            acceptable = (
-//                prevElement != nil &&
-//                nextElement != nil
-//            )
-                
-            posIndex = newPosNumber
+        while toRemove == nil || (notAround-1...notAround+1).contains(posIndex) {
+            posIndex = Int.random(in: 0..<self.capacity)
             
             toRemove = self.getElement(number: posIndex)
         }
@@ -64,8 +52,9 @@ class State: Matrix<Card?> {
     }
     
     func removeRandomlyNCards(n: Int) {
+        var lastIndex: Int = Int.min + 1
         for _ in 0..<n {
-            let _ = removeRandomly()
+            lastIndex = removeRandomly(notAround: lastIndex)
         }
     }
     
