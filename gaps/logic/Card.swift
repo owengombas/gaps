@@ -36,6 +36,14 @@ class Card: CustomStringConvertible {
         }
     }
     
+    var next: Card? {
+        let n: CardNumbers? = CardNumbers.init(rawValue: self.cardNumber.rawValue + 1)
+        
+        if n == nil { return nil }
+        
+        return Card(color: self._cardColor, number: n!)
+    }
+    
     public static func fromNumber(number: Int) -> Card {
         assert(number >= 0, "The number should be greater than 0")
         assert(number <= 51, "The number should be smaller than 51")
@@ -53,5 +61,12 @@ class Card: CustomStringConvertible {
         let cardNumber: CardNumbers? = CardNumbers(rawValue: n)
         
         return Card(color: cardColor!, number: cardNumber!)
+    }
+    
+    func isEquals(to: Card?) -> Bool {
+        return (
+            self.cardNumber == to?.cardNumber &&
+            self.cardColor == to?.cardColor
+        )
     }
 }
