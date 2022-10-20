@@ -7,16 +7,24 @@
 
 import Foundation
 
+/**
+ Represent a game state
+ */
 class State: Matrix<Card?> {
     @Published private var _moves: [Move] = []
     private var _emptySpaces: [(Int, Int)] = []
+    private var _removedCards: [Card] = []
     
-    var emptySpaces: [(Int, Int)]  {
+    var gaps: [(Int, Int)]  {
         get { return self._emptySpaces }
     }
     
     var moves: [Move] {
         get { return self._moves }
+    }
+    
+    var removedCards: [Card] {
+        get { return self._removedCards }
     }
     
     init() {
@@ -29,9 +37,12 @@ class State: Matrix<Card?> {
         )
     }
     
+    /**
+     Get a copy of the actual state
+     */
     override func copy() -> State {
         let s = State()
-        s._emptySpaces = self.emptySpaces
+        s._emptySpaces = self.gaps
         
         s.setElements(value: {(i, j, _, _) in
             return self.getElement(i: i, j: j)
@@ -40,64 +51,139 @@ class State: Matrix<Card?> {
         return s
     }
     
-    func redistribute() {
+    /**
+     Reset and rearrange the game to it's initial state
+     */
+    func reset() {
         self._emptySpaces = []
         self._moves = []
+        self._removedCards = []
         self.forEach(cb: {(i, j, v, c) in
             return self.setElement(i: i, j: j, value: Card.fromNumber(number: c))
         })
     }
     
-    func removeRandomly(notAround: Int) -> Int {
+    /**
+     Find a card position in the game
+     */
+    func find(card: Card?) -> (Int, Int)? {
+        return self.findOnePosition(condition: {(i: Int, j: Int, v: Card?, c: Int) in
+            return v?.number == card?.number
+        })
+    }
+    
+    /**
+     Remove the king cards from the game
+     */
+    func removeKings() {
+        self.forEach(cb: {i, j, v, c in
+            if v?.cardNumber == .KING {
+                self.setElement(i: i, j: j, value: nil)
+                self._removedCards.append(v!)
+                self._emptySpaces.append((i, j))
+            }
+        })
+    }
+    
+    /**
+     Remove randomly one (NOT SAFE)
+     */
+    func removeRandomly() -> Int {
         var toRemove: Card? = nil
         var posIndex: Int = -1
         
-        while toRemove == nil || (notAround-1...notAround+1).contains(posIndex) {
+        // Do not remove an already remove value
+        while toRemove == nil {
             posIndex = Int.random(in: 0..<self.capacity)
-            
             toRemove = self.getElement(number: posIndex)
         }
         
+        self._removedCards.append(self.getElement(number: posIndex)!)
         self.setElement(number: posIndex, value: nil)
         self._emptySpaces.append(self.getPositionFrom(index: posIndex))
         
         return posIndex
     }
     
+    /**
+     Remove randomly N cards from the game
+     */
     func removeCardsRandomly(numberOfCards: Int) {
-        var lastIndex: Int = Int.min + 1
         for _ in 0..<numberOfCards {
-            lastIndex = removeRandomly(notAround: lastIndex)
+            let _ = removeRandomly()
         }
     }
     
+    /**
+     Generate all moves for a specific cardNumber to a specific position
+     */
+    private func getMovesFor(cardNumber: CardNumbers, emptySpace: (Int, Int)) -> [Move] {
+        var acesMoves: [Move] = []
+        
+        self.forEach(cb: {i, j, c, v in
+            if (c?.cardNumber == cardNumber) {
+                let childrenState: State = self.copy()
+                childrenState.swap(posA: (i, j), posB: emptySpace)
+                
+                let move = Move(from: (i, j), to: emptySpace, card: c!, state: childrenState)
+                
+                acesMoves.append(move)
+            }
+        })
+        
+        return acesMoves
+    }
+    
+    /**
+    Find all moves based on the game rules
+     */
     func computeMoves() {
         self._moves = []
         
         print(self)
         
-        for emptySpace in emptySpaces {
-            let previousPositionCard: Card? = self.previous(position: emptySpace)
-            if previousPositionCard == nil { continue }
+        for gap in gaps {
+            // Get the previous card in the game state
+            let leftCard: Card? = self.previous(position: gap)
+            if leftCard == nil {
+                self._moves.append(contentsOf: getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                continue
+            }
             
-            let card = previousPositionCard!.next
-            if card == nil { continue }
+            // Get the higher card from the left one
+            let higherLeftCard = leftCard!.higher
+            if higherLeftCard == nil {
+                print("NO HIGHER CARD FOR \(leftCard!) AT \(gap)")
+                continue
+                
+            }
             
-            let foundPosition = self.find(card: card)
-            if foundPosition == nil { continue }
+            // Get the position of the higher card from the left one in the current game state
+            let higherLeftCardPosition = self.find(card: higherLeftCard)
+            if higherLeftCardPosition == nil {
+                print("HIGHER CARD \(higherLeftCard!) POSITION NOT FOUND")
+                continue
+            }
             
+            // Copy current state, move the card to the gap and add it to children moves
             let childrenState: State = self.copy()
-            childrenState.swap(from: emptySpace, to: foundPosition!)
+            childrenState.swap(posA: gap, posB: higherLeftCardPosition!)
             
-            let m = Move(from: foundPosition!, to: emptySpace, card: card!, state: childrenState)
+            let m = Move(from: higherLeftCardPosition!, to: gap, card: higherLeftCard!, state: childrenState)
             self._moves.append(m)
         }
     }
     
+    /**
+     Get the previous Card in the game from a position
+     */
     func previous(position: (Int, Int)) -> Card? {
         return previous(i: position.0, j: position.1)
     }
     
+    /**
+     Get the previous Card in the game from a position
+     */
     func previous(i: Int, j: Int) -> Card? {
         if i - 1 >= 0 {
             return self.getElement(i: i - 1, j: j)
@@ -105,20 +191,20 @@ class State: Matrix<Card?> {
         return nil
     }
     
+    /**
+     Get the next Card in the game from a position
+     */
     func next(position: (Int, Int)) -> Card? {
         return next(i: position.0, j: position.1)
     }
     
+    /**
+     Get the next Card in the game from a position
+     */
     func next(i: Int, j: Int) -> Card? {
         if i + 1 <= self.columns - 1 {
             return self.getElement(i: i + 1, j: j)
         }
         return nil
-    }
-    
-    func find(card: Card?) -> (Int, Int)? {
-        return self.findOnePosition(condition: {(i: Int, j: Int, v: Card?, c: Int) in
-            return v?.number == card?.number
-        })
     }
 }

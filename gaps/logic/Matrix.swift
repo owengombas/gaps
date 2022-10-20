@@ -56,6 +56,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
+    /**
+     Get a copy off the matrix
+     */
     func copy() -> Matrix<T> {
         return Matrix<T>(
             columns: self._columns,
@@ -92,34 +95,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         return self.setElement(i: pos.0, j: pos.1, value: value)
     }
     
-    func shuffle() {
-        for i in 0..<self.capacity {
-            let j = Int.random(in: i..<self.capacity)
-            
-            let iPos: (Int, Int) = self.getPositionFrom(index: i)
-            let jPos: (Int, Int) = self.getPositionFrom(index: j)
-            
-            self.swap(from: iPos, to: jPos)
-        }
-    }
-    
-    func getPositionFrom(index: Int) -> (Int, Int) {
-        let column = index % self._columns
-        let line = Int(floor(Double(index) / Double(self._columns)))
-        return (column, line)
-    }
-    
-    func swap(iFrom: Int, jFrom: Int, iTo: Int, jTo: Int) {
-        let e1 = getElement(i: iFrom, j: jFrom)
-        let e2 = getElement(i: iTo, j: jTo)
-        setElement(i: iTo, j: jTo, value: e1)
-        setElement(i: iFrom, j: jFrom, value: e2)
-    }
-    
-    func swap(from: (Int, Int), to: (Int, Int)) {
-        self.swap(iFrom: from.0, jFrom: from.1, iTo: to.0, jTo: to.1)
-    }
-    
+    /**
+     Set all elements to a value
+     */
     func setElements(value: (Int, Int, T, Int) -> T) {
         self.forEach(cb: {(i, j, v, c) in
             let newValue = value(i, j, v, c)
@@ -127,6 +105,55 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         })
     }
     
+    /**
+     Shuffle values in the matrix
+     */
+    func shuffle() {
+        for i in 0..<self.capacity {
+            let j = Int.random(in: i..<self.capacity)
+            
+            let iPos: (Int, Int) = self.getPositionFrom(index: i)
+            let jPos: (Int, Int) = self.getPositionFrom(index: j)
+            
+            self.swap(posA: iPos, posB: jPos)
+        }
+    }
+    
+    /**
+     Get a (i, j) position from a index based on the flatten matrix
+     [
+       [a, b, c]
+       [d, e, f]
+     ]
+     to
+     [a, b, c, d, e, f]
+     */
+    func getPositionFrom(index: Int) -> (Int, Int) {
+        let column = index % self._columns
+        let line = Int(floor(Double(index) / Double(self._columns)))
+        return (column, line)
+    }
+    
+    /**
+     Swap two values at specified positions in the matrix
+     */
+    func swap(i1: Int, i2: Int, j1: Int, j2: Int) {
+        let e1 = getElement(i: i1, j: i2)
+        let e2 = getElement(i: j1, j: j2)
+        setElement(i: j1, j: j2, value: e1)
+        setElement(i: i1, j: i2, value: e2)
+    }
+    
+    /**
+     Swap two values at specified positions in the matrix
+     */
+    func swap(posA: (Int, Int), posB: (Int, Int)){
+        self.swap(i1: posA.0, i2: posA.1, j1: posB.0, j2: posB.1)
+    }
+    
+    /**
+     Perform async map
+     */
     func map(cb: (Int, Int, T, Int) -> (T)) -> Matrix<T> {
         let copy = self.copy()
         
@@ -137,6 +164,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         return copy
     }
     
+    /**
+     Find positions based on a condition
+     */
     func findPositions(condition: (Int, Int, T, Int) -> Bool) -> [(Int, Int)] {
         var positions: [(Int, Int)] = []
         
@@ -149,12 +179,18 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         return positions
     }
     
+    /**
+     Find first position based on a condition
+     */
     func findOnePosition(condition: (Int, Int, T, Int) -> Bool) -> (Int, Int)? {
         let positions = findPositions(condition: condition)
         if positions.count >= 1 { return positions[0] }
         return nil
     }
     
+    /**
+     Perform an async forEach loop from left to right order
+     */
     func forEach(cb: (Int, Int, T, Int) -> ()) {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
@@ -167,6 +203,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
+    /**
+     Perform an async forEach loop from top to bottom order
+     */
     func forEachTopBottom(cb: (Int, Int, T, Int) -> ()) {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
@@ -179,6 +218,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
+    /**
+     Perform a synchronous forEach loop from left to right order
+     */
     func forEachSync(cb: (Int, Int, T, Int) -> (), lineChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
         for j in 0 ..< _lines {
@@ -190,6 +232,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
+    /**
+     Perform a synchronous forEach loop from top to bottom order
+     */
     func forEachTopBottomSync(cb: (Int, Int, T, Int) -> (), columnChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
         for i in 0 ..< _columns {
@@ -201,6 +246,10 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
+    /**
+     Flatten the matrix and convert it to a single array
+     @param fromTopToBottom Order the values for them to match the top to bottom order
+     */
     func toArray(fromTopToBottom: Bool = false) -> [T] {
         var arr: [T] = []
         

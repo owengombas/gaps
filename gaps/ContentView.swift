@@ -18,32 +18,55 @@ struct ContentView: View {
     ]
     
     func generateNewGame() {
-        state.redistribute()
+        state.reset()
         state.shuffle()
-        state.removeCardsRandomly(numberOfCards: 4)
+        state.removeKings()
         state.computeMoves()
         print(state.moves.count)
     }
     
     var body: some View {
         VStack {
-            LazyHGrid(rows: items) {
-                ForEach(Array(state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
-                    Text(card?.description ?? "GAP")
+            Group {
+                LazyHGrid(rows: items) {
+                    ForEach(Array(state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
+                        Text(card?.description ?? "GAP").font(.system(size: 10))
+                    }
                 }
             }
             
-            Button("SHUFFLE", action: generateNewGame)
-            Button("REDISTRIBUTE", action: state.redistribute)
+            Spacer()
             
-            ForEach(state.moves, id: \.state.description) { move in
-                Button(move.description, action: state.shuffle)
+            Button("Generate new game", action: generateNewGame)
+            
+            Spacer()
+            
+            Group {
+                Button("Organize", action: state.reset)
+                Button("Remove Kings", action: state.removeKings)
+                Button("Shuffle", action: state.shuffle)
+                Button("Finds moves", action: state.computeMoves)
             }
             
+            Spacer()
             
+            Group {
+                Text("\(state.moves.count) STATE CHILDREN FOUND:")
+                ForEach(state.moves, id: \.state.description) { move in
+                    Button(move.description, action: state.shuffle)
+                }
+            }
+            
+            Spacer()
+            
+            Group {
+                Text("REMOVED CARDS:")
+                ForEach(state.removedCards, id: \.description) {card in
+                    Text(card.description)
+                }
+            }
         }
-        .padding()
-        .onAppear() { generateNewGame() }
+        .onAppear() { }
     }
     
     init() {

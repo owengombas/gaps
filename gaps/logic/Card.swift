@@ -36,7 +36,10 @@ class Card: CustomStringConvertible {
         }
     }
     
-    var next: Card? {
+    /**
+     Get the higher rank card from the same color
+     */
+    var higher: Card? {
         let n: CardNumbers? = CardNumbers.init(rawValue: self.cardNumber.rawValue + 1)
         
         if n == nil { return nil }
@@ -44,6 +47,13 @@ class Card: CustomStringConvertible {
         return Card(color: self._cardColor, number: n!)
     }
     
+    /**
+     Each card has an attributed number from 0 to 51
+     ♣  [0, 12] - CLUB
+     ♦ [13, 25] - DIAMOND
+     ♥ [26, 38] - HEART
+     ♠ [39, 51] - SPADE
+     */
     public static func fromNumber(number: Int) -> Card {
         assert(number >= 0, "The number should be greater than 0")
         assert(number <= 51, "The number should be smaller than 51")
@@ -63,6 +73,9 @@ class Card: CustomStringConvertible {
         return Card(color: cardColor!, number: cardNumber!)
     }
     
+    /**
+     Are two card equals, value based
+     */
     func isEquals(to: Card?) -> Bool {
         return (
             self.cardNumber == to?.cardNumber &&

@@ -7,6 +7,9 @@
 
 import Foundation
 
+/**
+ Represents a move in the game
+ */
 class Move: CustomStringConvertible {
     var description: String {
         get {
