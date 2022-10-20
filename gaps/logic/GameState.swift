@@ -10,13 +10,16 @@ import Foundation
 /**
  Represent a game state
  */
-class State: Matrix<Card?> {
+class GameState: Matrix<Card?> {
     @Published private var _moves: [Move] = []
-    private var _emptySpaces: [(Int, Int)] = []
     private var _removedCards: [Card] = []
     
     var gaps: [(Int, Int)]  {
-        get { return self._emptySpaces }
+        get {
+            return self.findPositions(condition: {i, j, v, c in
+                return v == nil
+            })
+        }
     }
     
     var moves: [Move] {
@@ -40,9 +43,8 @@ class State: Matrix<Card?> {
     /**
      Get a copy of the actual state
      */
-    override func copy() -> State {
-        let s = State()
-        s._emptySpaces = self.gaps
+    override func copy() -> GameState {
+        let s = GameState()
         
         s.setElements(value: {(i, j, _, _) in
             return self.getElement(i: i, j: j)
@@ -55,7 +57,6 @@ class State: Matrix<Card?> {
      Reset and rearrange the game to it's initial state
      */
     func reset() {
-        self._emptySpaces = []
         self._moves = []
         self._removedCards = []
         self.forEach(cb: {(i, j, v, c) in
@@ -80,7 +81,6 @@ class State: Matrix<Card?> {
             if v?.cardNumber == .KING {
                 self.setElement(i: i, j: j, value: nil)
                 self._removedCards.append(v!)
-                self._emptySpaces.append((i, j))
             }
         })
     }
@@ -100,7 +100,6 @@ class State: Matrix<Card?> {
         
         self._removedCards.append(self.getElement(number: posIndex)!)
         self.setElement(number: posIndex, value: nil)
-        self._emptySpaces.append(self.getPositionFrom(index: posIndex))
         
         return posIndex
     }
@@ -122,7 +121,7 @@ class State: Matrix<Card?> {
         
         self.forEach(cb: {i, j, c, v in
             if (c?.cardNumber == cardNumber) {
-                let childrenState: State = self.copy()
+                let childrenState: GameState = self.copy()
                 childrenState.swap(posA: (i, j), posB: emptySpace)
                 
                 let move = Move(from: (i, j), to: emptySpace, card: c!, state: childrenState)
@@ -166,12 +165,20 @@ class State: Matrix<Card?> {
             }
             
             // Copy current state, move the card to the gap and add it to children moves
-            let childrenState: State = self.copy()
+            let childrenState: GameState = self.copy()
             childrenState.swap(posA: gap, posB: higherLeftCardPosition!)
             
             let m = Move(from: higherLeftCardPosition!, to: gap, card: higherLeftCard!, state: childrenState)
             self._moves.append(m)
         }
+    }
+    
+    /**
+     Apply a move and change the current state
+     */
+    func performMove(move: Move) {
+        self.swap(posA: move.from, posB: move.to)
+        self.computeMoves()
     }
     
     /**

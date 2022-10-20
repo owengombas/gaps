@@ -19,7 +19,7 @@
 		5AEC633528ED9B32001AEE3D /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633428ED9B32001AEE3D /* Card.swift */; };
 		5AEC633728ED9B98001AEE3D /* CardColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633628ED9B98001AEE3D /* CardColors.swift */; };
 		5AEC633928ED9C64001AEE3D /* CardNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633828ED9C64001AEE3D /* CardNumbers.swift */; };
-		5AEC633B28ED9D66001AEE3D /* State.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633A28ED9D66001AEE3D /* State.swift */; };
+		5AEC633B28ED9D66001AEE3D /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633A28ED9D66001AEE3D /* GameState.swift */; };
 		5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633C28ED9DD9001AEE3D /* Matrix.swift */; };
 /* End PBXBuildFile section */
 
@@ -57,7 +57,7 @@
 		5AEC633428ED9B32001AEE3D /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 		5AEC633628ED9B98001AEE3D /* CardColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardColors.swift; sourceTree = "<group>"; };
 		5AEC633828ED9C64001AEE3D /* CardNumbers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardNumbers.swift; sourceTree = "<group>"; };
-		5AEC633A28ED9D66001AEE3D /* State.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = State.swift; sourceTree = "<group>"; };
+		5AEC633A28ED9D66001AEE3D /* GameState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameState.swift; sourceTree = "<group>"; };
 		5AEC633C28ED9DD9001AEE3D /* Matrix.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Matrix.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -150,7 +150,7 @@
 				5AEC633428ED9B32001AEE3D /* Card.swift */,
 				5AEC633628ED9B98001AEE3D /* CardColors.swift */,
 				5AEC633828ED9C64001AEE3D /* CardNumbers.swift */,
-				5AEC633A28ED9D66001AEE3D /* State.swift */,
+				5AEC633A28ED9D66001AEE3D /* GameState.swift */,
 				5AEC633C28ED9DD9001AEE3D /* Matrix.swift */,
 				5A32134228FDC07900E15F89 /* Graph.swift */,
 				5A0BBD1229009AA4008F4936 /* Move.swift */,
@@ -292,7 +292,7 @@
 				5A0BBD1329009AA4008F4936 /* Move.swift in Sources */,
 				5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */,
 				5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */,
-				5AEC633B28ED9D66001AEE3D /* State.swift in Sources */,
+				5AEC633B28ED9D66001AEE3D /* GameState.swift in Sources */,
 				5AEC633728ED9B98001AEE3D /* CardColors.swift in Sources */,
 				5AEC633528ED9B32001AEE3D /* Card.swift in Sources */,
 				5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */,

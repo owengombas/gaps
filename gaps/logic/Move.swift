@@ -20,7 +20,7 @@ class Move: CustomStringConvertible {
     private var _from: (Int, Int)
     private var _to: (Int, Int)
     private var _card: Card
-    private var _state: State
+    private var _state: GameState
     
     var from: (Int, Int) {
         get { return self._from }
@@ -30,7 +30,7 @@ class Move: CustomStringConvertible {
         get { return self._to }
     }
     
-    var state: State {
+    var state: GameState {
         get { return self._state }
     }
     
@@ -38,7 +38,7 @@ class Move: CustomStringConvertible {
         get { return self._card }
     }
     
-    init(from: (Int, Int), to: (Int, Int), card: Card, state: State) {
+    init(from: (Int, Int), to: (Int, Int), card: Card, state: GameState) {
         self._from = from
         self._to = to
         self._card = card
