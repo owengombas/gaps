@@ -70,7 +70,10 @@ struct ContentView: View {
                         depth = 0
                     })
                     Button("Remove Kings", action: state.removeKings)
-                    Button("Shuffle", action: state.shuffle)
+                    Button("Shuffle", action: {
+                        state.shuffle()
+                        state.computeMoves()
+                    })
                     Button("Finds moves", action: state.computeMoves)
                 }
                 
