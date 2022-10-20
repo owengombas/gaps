@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5A0BBD1329009AA4008F4936 /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0BBD1229009AA4008F4936 /* Move.swift */; };
 		5A32134328FDC07900E15F89 /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A32134228FDC07900E15F89 /* Graph.swift */; };
 		5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630828ED85A4001AEE3D /* gapsApp.swift */; };
 		5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630A28ED85A4001AEE3D /* ContentView.swift */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5A0BBD1229009AA4008F4936 /* Move.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Move.swift; sourceTree = "<group>"; };
 		5A32134228FDC07900E15F89 /* Graph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graph.swift; sourceTree = "<group>"; };
 		5AEC630528ED85A4001AEE3D /* gaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AEC630828ED85A4001AEE3D /* gapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gapsApp.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				5AEC633A28ED9D66001AEE3D /* State.swift */,
 				5AEC633C28ED9DD9001AEE3D /* Matrix.swift */,
 				5A32134228FDC07900E15F89 /* Graph.swift */,
+				5A0BBD1229009AA4008F4936 /* Move.swift */,
 			);
 			path = logic;
 			sourceTree = "<group>";
@@ -286,6 +289,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5A32134328FDC07900E15F89 /* Graph.swift in Sources */,
+				5A0BBD1329009AA4008F4936 /* Move.swift in Sources */,
 				5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */,
 				5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */,
 				5AEC633B28ED9D66001AEE3D /* State.swift in Sources */,

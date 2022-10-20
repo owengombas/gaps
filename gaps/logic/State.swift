@@ -8,10 +8,15 @@
 import Foundation
 
 class State: Matrix<Card?> {
+    @Published private var _moves: [Move] = []
     private var _emptySpaces: [(Int, Int)] = []
     
     var emptySpaces: [(Int, Int)]  {
         get { return self._emptySpaces }
+    }
+    
+    var moves: [Move] {
+        get { return self._moves }
     }
     
     init() {
@@ -35,6 +40,14 @@ class State: Matrix<Card?> {
         return s
     }
     
+    func redistribute() {
+        self._emptySpaces = []
+        self._moves = []
+        self.forEach(cb: {(i, j, v, c) in
+            return self.setElement(i: i, j: j, value: Card.fromNumber(number: c))
+        })
+    }
+    
     func removeRandomly(notAround: Int) -> Int {
         var toRemove: Card? = nil
         var posIndex: Int = -1
@@ -51,37 +64,34 @@ class State: Matrix<Card?> {
         return posIndex
     }
     
-    func removeRandomlyNCards(n: Int) {
+    func removeCardsRandomly(numberOfCards: Int) {
         var lastIndex: Int = Int.min + 1
-        for _ in 0..<n {
+        for _ in 0..<numberOfCards {
             lastIndex = removeRandomly(notAround: lastIndex)
         }
     }
     
-    func computeChildrenStates() -> [State] {
-        var children: [State] = []
+    func computeMoves() {
+        self._moves = []
+        
+        print(self)
         
         for emptySpace in emptySpaces {
             let previousPositionCard: Card? = self.previous(position: emptySpace)
+            if previousPositionCard == nil { continue }
             
-            if previousPositionCard == nil {
-                print("NO PREVIOUS POSITION CARD FOR \(emptySpace)")
-                continue
-            }
+            let card = previousPositionCard!.next
+            if card == nil { continue }
             
-            let foundPosition = self.find(card: previousPositionCard!.next)
-            if foundPosition == nil {
-                print("NO NEXT CARD FOR \(previousPositionCard!)")
-                continue
-            }
+            let foundPosition = self.find(card: card)
+            if foundPosition == nil { continue }
             
             let childrenState: State = self.copy()
-            print ("MOVING \(self.getElement(position: foundPosition!)) (position: \(foundPosition!)) NEXT TO \(previousPositionCard!) (to position: \(emptySpace))")
             childrenState.swap(from: emptySpace, to: foundPosition!)
-            children.append(childrenState)
+            
+            let m = Move(from: foundPosition!, to: emptySpace, card: card!, state: childrenState)
+            self._moves.append(m)
         }
-        
-        return children
     }
     
     func previous(position: (Int, Int)) -> Card? {
@@ -108,10 +118,7 @@ class State: Matrix<Card?> {
     
     func find(card: Card?) -> (Int, Int)? {
         return self.findOnePosition(condition: {(i: Int, j: Int, v: Card?, c: Int) in
-            if v == nil { return false }
-            if v!.isEquals(to: card) { return true }
-            
-            return false
+            return v?.number == card?.number
         })
     }
 }

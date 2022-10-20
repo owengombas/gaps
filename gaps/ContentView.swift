@@ -8,15 +8,45 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject var state: State = State()
+    
+    var items: [GridItem] = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+    ]
+    
+    func generateNewGame() {
+        state.redistribute()
+        state.shuffle()
+        state.removeCardsRandomly(numberOfCards: 4)
+        state.computeMoves()
+        print(state.moves.count)
+    }
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+            LazyHGrid(rows: items) {
+                ForEach(Array(state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
+                    Text(card?.description ?? "GAP")
+                }
+            }
+            
+            Button("SHUFFLE", action: generateNewGame)
+            Button("REDISTRIBUTE", action: state.redistribute)
+            
+            ForEach(state.moves, id: \.state.description) { move in
+                Button(move.description, action: state.shuffle)
+            }
+            
             
         }
         .padding()
+        .onAppear() { generateNewGame() }
+    }
+    
+    init() {
     }
 }
 

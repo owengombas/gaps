@@ -7,8 +7,8 @@
 
 import Foundation
 
-class Matrix<T>: CustomStringConvertible {
-    private var _repr: [[T]]
+class Matrix<T>: CustomStringConvertible, ObservableObject {
+    @Published private var _repr: [[T]]
     private var _columns: Int
     private var _lines: Int
     
@@ -99,7 +99,7 @@ class Matrix<T>: CustomStringConvertible {
             let iPos: (Int, Int) = self.getPositionFrom(index: i)
             let jPos: (Int, Int) = self.getPositionFrom(index: j)
             
-            self.swap(iFrom: iPos.0, jFrom: iPos.1, iTo: jPos.0, jTo: jPos.1)
+            self.swap(from: iPos, to: jPos)
         }
     }
     
@@ -167,6 +167,18 @@ class Matrix<T>: CustomStringConvertible {
         }
     }
     
+    func forEachTopBottom(cb: (Int, Int, T, Int) -> ()) {
+        DispatchQueue.global(qos: .background).sync {
+            var count = 0
+            for i in 0 ..< _columns {
+                for j in 0 ..< _lines {
+                    cb(i, j, getElement(i: i, j: j), count)
+                    count += 1
+                }
+            }
+        }
+    }
+    
     func forEachSync(cb: (Int, Int, T, Int) -> (), lineChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
         for j in 0 ..< _lines {
@@ -178,12 +190,29 @@ class Matrix<T>: CustomStringConvertible {
         }
     }
     
-    func toArray() -> [T] {
+    func forEachTopBottomSync(cb: (Int, Int, T, Int) -> (), columnChangedCb: (Int, Int) -> () = {(_, _) in }) {
+        var count = 0
+        for i in 0 ..< _columns {
+            for j in 0 ..< _lines {
+                cb(i, j, getElement(i: i, j: j), count)
+                count += 1
+            }
+            columnChangedCb(i, count)
+        }
+    }
+    
+    func toArray(fromTopToBottom: Bool = false) -> [T] {
         var arr: [T] = []
         
-        self.forEach(cb: {(i: Int, j: Int, v: T, c: Int) in
-            arr.insert(self.getElement(i: i, j: j), at: c)
-        })
+        if fromTopToBottom {
+            self.forEachTopBottom(cb: {(i: Int, j: Int, v: T, c: Int) in
+                arr.insert(self.getElement(i: i, j: j), at: c)
+            })
+        } else {
+            self.forEach(cb: {(i: Int, j: Int, v: T, c: Int) in
+                arr.insert(self.getElement(i: i, j: j), at: c)
+            })
+        }
         
         return arr
     }
