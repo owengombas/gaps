@@ -109,7 +109,7 @@ class GameState: Matrix<Card?> {
      */
     func removeCardsRandomly(numberOfCards: Int) {
         for _ in 0..<numberOfCards {
-            let _ = removeRandomly()
+            let _ = self.removeRandomly()
         }
     }
     
@@ -145,7 +145,10 @@ class GameState: Matrix<Card?> {
             // Get the previous card in the game state
             let leftCard: Card? = self.previous(position: gap)
             if leftCard == nil {
-                self._moves.append(contentsOf: getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                // If the gap is at the begining of a row, then all aces can fill it
+                if gap.0 <= 0 {
+                    self._moves.append(contentsOf: getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                }
                 continue
             }
             
@@ -185,7 +188,7 @@ class GameState: Matrix<Card?> {
      Get the previous Card in the game from a position
      */
     func previous(position: (Int, Int)) -> Card? {
-        return previous(i: position.0, j: position.1)
+        return self.previous(i: position.0, j: position.1)
     }
     
     /**
@@ -202,7 +205,7 @@ class GameState: Matrix<Card?> {
      Get the next Card in the game from a position
      */
     func next(position: (Int, Int)) -> Card? {
-        return next(i: position.0, j: position.1)
+        return self.next(i: position.0, j: position.1)
     }
     
     /**

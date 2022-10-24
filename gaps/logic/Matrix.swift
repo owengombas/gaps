@@ -16,9 +16,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         get {
             var s = "(\(self._columns)x\(self._lines))\n"
             
-            for j in 0 ..< _lines {
-                for i in 0 ..< _columns {
-                    s += String(describing: getElement(i: i, j: j)) + " "
+            for j in 0 ..< self._lines {
+                for i in 0 ..< self._columns {
+                    s += String(describing: self.getElement(i: i, j: j)) + " "
                 }
                 s += "\n\n"
             }
@@ -138,10 +138,10 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      Swap two values at specified positions in the matrix
      */
     func swap(i1: Int, i2: Int, j1: Int, j2: Int) {
-        let e1 = getElement(i: i1, j: i2)
-        let e2 = getElement(i: j1, j: j2)
-        setElement(i: j1, j: j2, value: e1)
-        setElement(i: i1, j: i2, value: e2)
+        let e1 = self.getElement(i: i1, j: i2)
+        let e2 = self.getElement(i: j1, j: j2)
+        self.setElement(i: j1, j: j2, value: e1)
+        self.setElement(i: i1, j: i2, value: e2)
     }
     
     /**
@@ -183,7 +183,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      Find first position based on a condition
      */
     func findOnePosition(condition: (Int, Int, T, Int) -> Bool) -> (Int, Int)? {
-        let positions = findPositions(condition: condition)
+        let positions = self.findPositions(condition: condition)
         if positions.count >= 1 { return positions[0] }
         return nil
     }
@@ -194,9 +194,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func forEach(cb: (Int, Int, T, Int) -> ()) {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
-            for j in 0 ..< _lines {
-                for i in 0 ..< _columns {
-                    cb(i, j, getElement(i: i, j: j), count)
+            for j in 0 ..< self._lines {
+                for i in 0 ..< self._columns {
+                    cb(i, j, self.getElement(i: i, j: j), count)
                     count += 1
                 }
             }
@@ -209,9 +209,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func forEachTopBottom(cb: (Int, Int, T, Int) -> ()) {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
-            for i in 0 ..< _columns {
-                for j in 0 ..< _lines {
-                    cb(i, j, getElement(i: i, j: j), count)
+            for i in 0 ..< self._columns {
+                for j in 0 ..< self._lines {
+                    cb(i, j, self.getElement(i: i, j: j), count)
                     count += 1
                 }
             }
@@ -223,9 +223,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      */
     func forEachSync(cb: (Int, Int, T, Int) -> (), lineChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
-        for j in 0 ..< _lines {
-            for i in 0 ..< _columns {
-                cb(i, j, getElement(i: i, j: j), count)
+        for j in 0 ..< self._lines {
+            for i in 0 ..< self._columns {
+                cb(i, j, self.getElement(i: i, j: j), count)
                 count += 1
             }
             lineChangedCb(j, count)
@@ -237,9 +237,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      */
     func forEachTopBottomSync(cb: (Int, Int, T, Int) -> (), columnChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
-        for i in 0 ..< _columns {
-            for j in 0 ..< _lines {
-                cb(i, j, getElement(i: i, j: j), count)
+        for i in 0 ..< self._columns {
+            for j in 0 ..< self._lines {
+                cb(i, j, self.getElement(i: i, j: j), count)
                 count += 1
             }
             columnChangedCb(i, count)

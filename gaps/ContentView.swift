@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var state: GameState = GameState()
-    @State var depth = 0
-    @State var selected: Card? = nil
+    @StateObject private var _state: GameState = GameState()
+    @State private var _depth = 0
+    @State private var _selected: Card? = nil
     
     var items: [GridItem] = [
         GridItem(.flexible()),
@@ -20,17 +20,17 @@ struct ContentView: View {
     ]
     
     func generateNewGame() {
-        depth = 0
-        state.reset()
-        state.shuffle()
-        state.removeKings()
-        state.computeMoves()
-        print(state.moves.count)
+        self._depth = 0
+        self._state.reset()
+        self._state.shuffle()
+        self._state.removeKings()
+        self._state.computeMoves()
+        print(self._state.moves.count)
     }
     
     func getPositionFromHGridIndex(index: Int) -> (Int, Int) {
-        let line = index % self.state.lines
-        let column = Int(floor(Double(index) / Double(self.state.lines)))
+        let line = index % self._state.lines
+        let column = Int(floor(Double(index) / Double(self._state.lines)))
         return (column, line)
     }
     
@@ -42,21 +42,21 @@ struct ContentView: View {
                 
                 Spacer(minLength: 20)
                 
-                Text("Depth: \(depth)")
+                Text("Depth: \(_depth)")
                 Group {
                     LazyHGrid(rows: items) {
-                        ForEach(Array(state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
+                        ForEach(Array(self._state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
                             Group {
                                 if card != nil {
                                     Image("\(card!.cardColor)_\(card!.cardNumber)")
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .onTapGesture {
-                                            self.selected = card
+                                            self._selected = card
                                         }
                                         .padding(3)
                                         .cornerRadius(5)
-                                        .if(self.selected === card, transform: { view in
+                                        .if(self._selected === card, transform: { view in
                                             view.overlay(
                                                 RoundedRectangle(cornerRadius: 5)
                                                     .stroke(.blue, lineWidth: 3)
@@ -69,17 +69,17 @@ struct ContentView: View {
                                         .background(Color(red: 0.5, green: 0.5, blue: 0.5, opacity: 0.5))
                                         .cornerRadius(10)
                                         .onTapGesture {
-                                            if self.selected == nil {
+                                            if self._selected == nil {
                                                 return
                                             }
                                             
                                             let pos = self.getPositionFromHGridIndex(index: index)
                                             print("test", pos)
-                                            let m = Move(card: self.selected!, to: pos, state: self.state)
-                                            self.state.performMove(move: m)
-                                            self.selected = nil
+                                            let m = Move(card: self._selected!, to: pos, state: self._state)
+                                            self._state.performMove(move: m)
+                                            self._selected = nil
                                             
-                                            self.state.computeMoves()
+                                            self._state.computeMoves()
                                         }
                                 }
                             }
@@ -90,7 +90,7 @@ struct ContentView: View {
                 
                 Group {
                     LazyHGrid (rows: [GridItem(.flexible())]) {
-                        ForEach(state.removedCards, id: \.description) {card in
+                        ForEach(self._state.removedCards, id: \.description) {card in
                             Image("\(card.cardColor)_\(card.cardNumber)")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -101,27 +101,27 @@ struct ContentView: View {
                 .opacity(0.5)
                 
                 HStack {
-                    Button("Generate new game", action: generateNewGame)
+                    Button("Generate new game", action: self.generateNewGame)
                     Button("Reset", action: {
-                        state.reset()
-                        depth = 0
+                        self._state.reset()
+                        self._depth = 0
                     })
-                    Button("Remove Kings", action: state.removeKings)
+                    Button("Remove Kings", action: self._state.removeKings)
                     Button("Shuffle", action: {
-                        state.shuffle()
-                        state.computeMoves()
+                        self._state.shuffle()
+                        self._state.computeMoves()
                     })
-                    Button("Finds moves", action: state.computeMoves)
+                    Button("Finds moves", action: self._state.computeMoves)
                 }
                 
                 Spacer(minLength: 50)
                 
                 Group {
-                    Text("\(state.moves.count) Children states found").bold()
-                    ForEach(state.moves, id: \.state.description) { move in
+                    Text("\(self._state.moves.count) Children states found").bold()
+                    ForEach(self._state.moves, id: \.state.description) { move in
                         Button(move.description, action: {
-                            state.performMove(move: move)
-                            depth += 1
+                            self._state.performMove(move: move)
+                            self._depth += 1
                         })
                     }
                 }
