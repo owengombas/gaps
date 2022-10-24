@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var state: GameState = GameState()
     @State var depth = 0
+    @State var selected: Card? = nil
     
     var items: [GridItem] = [
         GridItem(.flexible()),
@@ -27,6 +28,12 @@ struct ContentView: View {
         print(state.moves.count)
     }
     
+    func getPositionFromHGridIndex(index: Int) -> (Int, Int) {
+        let line = index % self.state.lines
+        let column = Int(floor(Double(index) / Double(self.state.lines)))
+        return (column, line)
+    }
+    
     var body: some View {
         VStack {
             ScrollView {
@@ -39,12 +46,42 @@ struct ContentView: View {
                 Group {
                     LazyHGrid(rows: items) {
                         ForEach(Array(state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
-                            if card != nil {
-                                Image("\(card!.cardColor)_\(card!.cardNumber)")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            } else {
-                                Spacer()
+                            Group {
+                                if card != nil {
+                                    Image("\(card!.cardColor)_\(card!.cardNumber)")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .onTapGesture {
+                                            self.selected = card
+                                        }
+                                        .padding(3)
+                                        .cornerRadius(5)
+                                        .if(self.selected === card, transform: { view in
+                                            view.overlay(
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(.blue, lineWidth: 3)
+                                            )
+                                        })
+                                        
+                                } else {
+                                    Spacer()
+                                        .frame(width: 80, height: 118, alignment: .center)
+                                        .background(Color(red: 0.5, green: 0.5, blue: 0.5, opacity: 0.5))
+                                        .cornerRadius(10)
+                                        .onTapGesture {
+                                            if self.selected == nil {
+                                                return
+                                            }
+                                            
+                                            let pos = self.getPositionFromHGridIndex(index: index)
+                                            print("test", pos)
+                                            let m = Move(card: self.selected!, to: pos, state: self.state)
+                                            self.state.performMove(move: m)
+                                            self.selected = nil
+                                            
+                                            self.state.computeMoves()
+                                        }
+                                }
                             }
                         }
                     }

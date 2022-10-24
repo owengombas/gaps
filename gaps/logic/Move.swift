@@ -44,4 +44,11 @@ class Move: CustomStringConvertible {
         self._card = card
         self._state = state
     }
+    
+    init(card: Card, to: (Int, Int), state: GameState) {
+        self._from = state.find(card: card)!
+        self._to = to
+        self._card = card
+        self._state = state
+    }
 }

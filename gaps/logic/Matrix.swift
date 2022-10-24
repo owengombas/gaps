@@ -36,7 +36,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     var lines: Int {
-        get { return self._columns }
+        get { return self._lines }
     }
     
     init(columns: Int, lines: Int, defaultValue: (Int, Int, Int) -> T) {
