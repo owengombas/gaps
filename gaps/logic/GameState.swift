@@ -176,12 +176,89 @@ class GameState: Matrix<Card?> {
         }
     }
     
+    func verifyMove(move: Move) -> Bool {
+        if self.getElement(position: move.to) != nil {
+            return false
+        }
+        
+        let previousCard = self.previous(position: move.to)
+        
+        if previousCard == nil {
+            if move.to.0 == 0 && move.card.cardNumber == .ACE {
+                return true
+            }
+            
+            return false
+        }
+        
+        let higherPreviousCard = previousCard?.higher
+        
+        // If king
+        if higherPreviousCard == nil {
+            return false
+        }
+        
+        if !higherPreviousCard!.isEquals(to: move.card) {
+            return false
+        }
+        
+        return true
+    }
+    
+    func clearMoves() {
+        self._moves = []
+    }
+    
     /**
      Apply a move and change the current state
      */
-    func performMove(move: Move) {
+    func performMove(move: Move, verify: Bool = false) {
+        if verify == true {
+            if !verifyMove(move: move) {
+                return
+            }
+        }
+        
         self.swap(posA: move.from, posB: move.to)
         self.computeMoves()
+    }
+    
+    func possibleMoves(card: Card) -> [Move] {
+        return self._moves.filter({ move in
+            return move.card.isEquals(to: card)
+        })
+    }
+    
+    func isMovable(card: Card) -> Bool {
+        return self.possibleMoves(card: card).count > 0
+    }
+    
+    func possibleGaps(card: Card) -> [Move] {
+        return self._moves.filter({ move in
+            return self.getElement(position: move.to)!.isEquals(to: card)
+        })
+    }
+    
+    func isAPossibleGap(card: Card?, gap: (Int, Int)) -> Bool {
+        if card === nil {
+            return false
+        }
+        
+        for move in self._moves {
+            if !move.card.isEquals(to: card) {
+                continue
+            }
+            
+            if move.to == gap {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    func isAPossibleGap(card: Card?, gap: Int) -> Bool {
+        return self.isAPossibleGap(card: card, gap: self.getPositionFrom(index: gap))
     }
     
     /**

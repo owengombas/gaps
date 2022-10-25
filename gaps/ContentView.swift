@@ -11,6 +11,7 @@ struct ContentView: View {
     @StateObject private var _state: GameState = GameState()
     @State private var _depth = 0
     @State private var _selected: Card? = nil
+    @State private var _peformMovesSafely: Bool = false
     
     var items: [GridItem] = [
         GridItem(.flexible()),
@@ -20,6 +21,7 @@ struct ContentView: View {
     ]
     
     func generateNewGame() {
+        self._selected = nil
         self._depth = 0
         self._state.reset()
         self._state.shuffle()
@@ -52,7 +54,11 @@ struct ContentView: View {
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .onTapGesture {
-                                            self._selected = card
+                                            if self._selected === nil {
+                                                self._selected = card
+                                            } else if self._selected === card {
+                                                self._selected = nil
+                                            }
                                         }
                                         .padding(3)
                                         .cornerRadius(5)
@@ -62,25 +68,38 @@ struct ContentView: View {
                                                     .stroke(.blue, lineWidth: 3)
                                             )
                                         })
-                                        
+                                        .if(self._state.isMovable(card: card!) && self._selected === nil, transform: { view in
+                                            view.overlay(
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(.red, lineWidth: 3)
+                                            )
+                                        })
                                 } else {
                                     Spacer()
                                         .frame(width: 80, height: 118, alignment: .center)
-                                        .background(Color(red: 0.5, green: 0.5, blue: 0.5, opacity: 0.5))
-                                        .cornerRadius(10)
+                                        .background(Color(red: 0.5, green: 0.5, blue: 0.5))
+                                        .cornerRadius(5)
+                                        .padding(3)
+                                        .opacity(self._state.isAPossibleGap(card: self._selected, gap: getPositionFromHGridIndex(index: index)) ? 0.4 : 0.1)
                                         .onTapGesture {
-                                            if self._selected == nil {
+                                            if self._selected === nil {
                                                 return
                                             }
                                             
                                             let pos = self.getPositionFromHGridIndex(index: index)
-                                            print("test", pos)
                                             let m = Move(card: self._selected!, to: pos, state: self._state)
-                                            self._state.performMove(move: m)
+                                            self._state.performMove(move: m, verify: self._peformMovesSafely)
                                             self._selected = nil
                                             
                                             self._state.computeMoves()
                                         }
+                                        .if(self._state.isAPossibleGap(card: self._selected, gap: getPositionFromHGridIndex(index: index)), transform: { view in
+                                            view
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 5)
+                                                    .stroke(.red, lineWidth: 3)
+                                            )
+                                        })
                                 }
                             }
                         }
@@ -102,16 +121,28 @@ struct ContentView: View {
                 
                 HStack {
                     Button("Generate new game", action: self.generateNewGame)
+                    
                     Button("Reset", action: {
+                        self._selected = nil
                         self._state.reset()
                         self._depth = 0
                     })
-                    Button("Remove Kings", action: self._state.removeKings)
+                    
+                    Button("Remove Kings", action: {
+                        self._selected = nil
+                        self._state.removeKings()
+                        self._state.computeMoves()
+                    })
+                    
                     Button("Shuffle", action: {
+                        self._selected = nil
                         self._state.shuffle()
                         self._state.computeMoves()
                     })
-                    Button("Finds moves", action: self._state.computeMoves)
+                    
+                    Toggle(isOn: self.$_peformMovesSafely) {
+                        Text("Apply move verification")
+                    }
                 }
                 
                 Spacer(minLength: 50)

@@ -47,6 +47,14 @@ class Card: CustomStringConvertible {
         return Card(color: self._cardColor, number: n!)
     }
     
+    var lower: Card? {
+        let n: CardNumbers? = CardNumbers.init(rawValue: self.cardNumber.rawValue - 1)
+        
+        if n == nil { return nil }
+        
+        return Card(color: self._cardColor, number: n!)
+    }
+    
     /**
      Each card has an attributed number from 0 to 51
      ♣  [0, 12] - CLUB
@@ -76,7 +84,7 @@ class Card: CustomStringConvertible {
     /**
      Are two card equals, value based
      */
-    func isEquals(to: Card?) -> Bool {
+    func isEquals(to: Card?) -> Bool {        
         return (
             self.cardNumber == to?.cardNumber &&
             self.cardColor == to?.cardColor
