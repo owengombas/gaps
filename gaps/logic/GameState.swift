@@ -14,6 +14,9 @@ class GameState: Matrix<Card?> {
     @Published private var _moves: [Move] = []
     private var _removedCards: [Card] = []
     
+    /**
+     The gapses positions
+     */
     var gaps: [(Int, Int)]  {
         get {
             return self.findPositions(condition: {i, j, v, c in
@@ -22,10 +25,16 @@ class GameState: Matrix<Card?> {
         }
     }
     
+    /**
+     Get the state's possibles moves
+     */
     var moves: [Move] {
         get { return self._moves }
     }
     
+    /**
+     The state's removed cards
+     */
     var removedCards: [Card] {
         get { return self._removedCards }
     }
@@ -139,8 +148,6 @@ class GameState: Matrix<Card?> {
     func computeMoves() {
         self._moves = []
         
-        print(self)
-        
         for gap in gaps {
             // Get the previous card in the game state
             let leftCard: Card? = self.previous(position: gap)
@@ -155,7 +162,7 @@ class GameState: Matrix<Card?> {
             // Get the higher card from the left one
             let higherLeftCard = leftCard!.higher
             if higherLeftCard == nil {
-                print("NO HIGHER CARD FOR \(leftCard!) AT \(gap)")
+                // print("NO HIGHER CARD FOR \(leftCard!) AT \(gap)")
                 continue
                 
             }
@@ -163,7 +170,7 @@ class GameState: Matrix<Card?> {
             // Get the position of the higher card from the left one in the current game state
             let higherLeftCardPosition = self.find(card: higherLeftCard)
             if higherLeftCardPosition == nil {
-                print("HIGHER CARD \(higherLeftCard!) POSITION NOT FOUND")
+                // print("HIGHER CARD \(higherLeftCard!) POSITION NOT FOUND")
                 continue
             }
             
@@ -176,28 +183,37 @@ class GameState: Matrix<Card?> {
         }
     }
     
+    /**
+     Verify if a move is performable, if the user can move the card and mutate the state, relying on the game rules
+     */
     func verifyMove(move: Move) -> Bool {
-        if self.getElement(position: move.to) != nil {
+        let supposedGap = self.getElement(position: move.to)
+        
+        // If the destination isn't a gap, then the move isn't performable
+        if supposedGap != nil {
             return false
         }
         
         let previousCard = self.previous(position: move.to)
         
         if previousCard == nil {
+            // If the card is an ace and the user wants to move it at the beginning of a row, then it's movable
             if move.to.0 == 0 && move.card.cardNumber == .ACE {
                 return true
             }
             
+            // If there's no previous card then the move isn't performable
             return false
         }
         
         let higherPreviousCard = previousCard?.higher
         
-        // If king
+        // If king, then no card can be placed in the gap
         if higherPreviousCard == nil {
             return false
         }
         
+        // If the card isn't strictly one rank higher to the previous one then the move isn't performable
         if !higherPreviousCard!.isEquals(to: move.card) {
             return false
         }
@@ -205,6 +221,9 @@ class GameState: Matrix<Card?> {
         return true
     }
     
+    /**
+     Clear the moves
+     */
     func clearMoves() {
         self._moves = []
     }
@@ -223,22 +242,34 @@ class GameState: Matrix<Card?> {
         self.computeMoves()
     }
     
+    /**
+     Get the possible moves for a specified card  (you have to perform computeMoves before)
+     */
     func possibleMoves(card: Card) -> [Move] {
         return self._moves.filter({ move in
             return move.card.isEquals(to: card)
         })
     }
     
+    /**
+    Is the card in the moves, can the card be moved in a gap (you have to perform computeMoves before)
+     */
     func isMovable(card: Card) -> Bool {
         return self.possibleMoves(card: card).count > 0
     }
     
+    /**
+     Get all the possible gaps where a card can be moved in  (you have to perform computeMoves before)
+     */
     func possibleGaps(card: Card) -> [Move] {
         return self._moves.filter({ move in
             return self.getElement(position: move.to)!.isEquals(to: card)
         })
     }
     
+    /**
+     Can the card be moved inside a specified gap  (you have to perform computeMoves before)
+     */
     func isAPossibleGap(card: Card?, gap: (Int, Int)) -> Bool {
         if card === nil {
             return false

@@ -13,7 +13,7 @@ import Foundation
 class Move: CustomStringConvertible {
     var description: String {
         get {
-            return "MOVE CARD \(self.card.description) FROM \(self.from) TO \(self.to)"
+            return "MOVE CARD \(self.card.description) FROM (\(self.from.1 + 1), \(self.from.0 + 1)) TO (\(self.to.1 + 1), \(self.from.0 + 1))"
         }
     }
     
