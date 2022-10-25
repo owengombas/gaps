@@ -27,7 +27,7 @@ struct ContentView: View {
         self._state.shuffle()
         self._state.removeKings()
         self._state.computeMoves()
-        print(self._state.moves.count)
+        // print(self._state.moves.count)
     }
     
     func getPositionFromHGridIndex(index: Int) -> (Int, Int) {
@@ -37,9 +37,8 @@ struct ContentView: View {
     }
     
     var body: some View {
-        VStack {
-            ScrollView {
-                
+        ScrollView {
+            VStack {
                 Text("Gaps").font(.system(size: 20)).bold()
                 
                 Spacer(minLength: 20)
@@ -68,12 +67,12 @@ struct ContentView: View {
                                                     .stroke(.blue, lineWidth: 3)
                                             )
                                         })
-                                        .if(self._state.isMovable(card: card!) && self._selected === nil, transform: { view in
-                                            view.overlay(
-                                                RoundedRectangle(cornerRadius: 5)
-                                                    .stroke(.red, lineWidth: 3)
-                                            )
-                                        })
+                                            .if(self._state.isMovable(card: card!) && self._selected === nil, transform: { view in
+                                                view.overlay(
+                                                    RoundedRectangle(cornerRadius: 5)
+                                                        .stroke(.red, lineWidth: 3)
+                                                )
+                                            })
                                 } else {
                                     Spacer()
                                         .frame(width: 80, height: 118, alignment: .center)
@@ -95,10 +94,10 @@ struct ContentView: View {
                                         }
                                         .if(self._state.isAPossibleGap(card: self._selected, gap: getPositionFromHGridIndex(index: index)), transform: { view in
                                             view
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 5)
-                                                    .stroke(.red, lineWidth: 3)
-                                            )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 5)
+                                                        .stroke(.red, lineWidth: 3)
+                                                )
                                         })
                                 }
                             }
@@ -159,8 +158,8 @@ struct ContentView: View {
             }
         }
         .onAppear() { }
-        .frame(maxWidth: .infinity)
-        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding()
     }
 }
 
