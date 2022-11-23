@@ -63,7 +63,7 @@ struct ContentView: View {
             
             print("Performing algorithm")
             
-            while result !== nil {
+            while result !== nil || !self._bestState.isSolved {
                 result = await self._bestState.astar(maxClosed: 100)
                 
                 if result === nil {
@@ -90,7 +90,7 @@ struct ContentView: View {
             
             print("Performing algorithm")
             
-            while result !== nil {
+            while result !== nil || !self._bestState.isSolved {
                 result = await self._bestState.branchAndBound(maxClosed: 100)
                 
                 if result === nil {
