@@ -39,13 +39,49 @@ class GameState: Matrix<Card?> {
         get { return self._removedCards }
     }
     
+    /**
+     Is the GameState final and solved
+     */
+    var isSolved: Bool {
+        get { return self.misplacedCards().isEmpty }
+    }
+    
+    /**
+     Does this state has possible moves ?
+     */
+    var isLeaf: Bool {
+        get { return self._moves.count <= 0 }
+    }
+
+    /**
+     Get the cost of the game state
+     */
+    var cost: Int {
+        get { return self.misplacedCards().count }
+    }
+    
+    private static func initFunc(columns: Int) -> ((Int, Int, Int) -> Card?) {
+        return {(_, _, c) in
+            return Card.fromNumber(number: c, columns: columns)
+        }
+    }
+    
     init() {
         super.init(
             columns: 13,
-            lines: 4,
-            defaultValue: {(_, _, c) in
-                return Card.fromNumber(number: c)
-            }
+            rows: 4,
+            defaultValue: GameState.initFunc(columns: 13)
+        )
+    }
+    
+    init(columns: Int, rows: Int) {
+        assert(columns <= 13, "Columns must be lower than 13")
+        assert(rows <= 4, "Rows must be lower than 4")
+        
+        super.init(
+            columns: columns,
+            rows: rows,
+            defaultValue: GameState.initFunc(columns: columns)
         )
     }
     
@@ -62,6 +98,12 @@ class GameState: Matrix<Card?> {
         return s
     }
     
+    func copy(from: GameState) {
+        super.copy(from: from)
+        self._removedCards = from.removedCards
+        self._moves = from.moves
+    }
+    
     /**
      Reset and rearrange the game to it's initial state
      */
@@ -69,7 +111,7 @@ class GameState: Matrix<Card?> {
         self._moves = []
         self._removedCards = []
         self.forEach(cb: {(i, j, v, c) in
-            return self.setElement(i: i, j: j, value: Card.fromNumber(number: c))
+            return self.setElement(i: i, j: j, value: Card.fromNumber(number: c, columns: self.columns))
         })
     }
     
@@ -85,9 +127,9 @@ class GameState: Matrix<Card?> {
     /**
      Remove the king cards from the game
      */
-    func removeKings() {
+    func remove(_ cardNumber: CardNumbers) {
         self.forEach(cb: {i, j, v, c in
-            if v?.cardNumber == .KING {
+            if v?.cardNumber == cardNumber {
                 self.setElement(i: i, j: j, value: nil)
                 self._removedCards.append(v!)
             }
@@ -95,22 +137,23 @@ class GameState: Matrix<Card?> {
     }
     
     /**
-     Remove randomly one (NOT SAFE)
+     Remove one card randomly
      */
-    func removeRandomly() -> Int {
-        var toRemove: Card? = nil
-        var posIndex: Int = -1
+    func removeRandomly() -> (Int, Int) {
+        var card: Card? = nil
+        var pos: (Int, Int)? = nil
         
-        // Do not remove an already remove value
-        while toRemove == nil {
-            posIndex = Int.random(in: 0..<self.capacity)
-            toRemove = self.getElement(number: posIndex)
+        while card === nil {
+            let posIndex = Int.random(in: 0..<self.capacity)
+            pos = self.getPositionFrom(index: posIndex)
+            
+            card = self.getElement(position: pos!)
         }
         
-        self._removedCards.append(self.getElement(number: posIndex)!)
-        self.setElement(number: posIndex, value: nil)
+        self.setElement(position: pos!, value: nil)
+        self._removedCards.append(card!)
         
-        return posIndex
+        return pos!
     }
     
     /**
@@ -146,7 +189,9 @@ class GameState: Matrix<Card?> {
     Find all moves based on the game rules
      */
     func computeMoves() {
-        self._moves = []
+        DispatchQueue.main.async {
+            self._moves = []
+        }
         
         for gap in gaps {
             // Get the previous card in the game state
@@ -154,7 +199,9 @@ class GameState: Matrix<Card?> {
             if leftCard == nil {
                 // If the gap is at the begining of a row, then all aces can fill it
                 if gap.0 <= 0 {
-                    self._moves.append(contentsOf: getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                    DispatchQueue.main.async {
+                        self._moves.append(contentsOf: self.getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                    }
                 }
                 continue
             }
@@ -179,7 +226,10 @@ class GameState: Matrix<Card?> {
             childrenState.swap(posA: gap, posB: higherLeftCardPosition!)
             
             let m = Move(from: higherLeftCardPosition!, to: gap, card: higherLeftCard!, state: childrenState)
-            self._moves.append(m)
+            
+            DispatchQueue.main.async {
+                self._moves.append(m)
+            }
         }
     }
     
@@ -323,6 +373,168 @@ class GameState: Matrix<Card?> {
         if i + 1 <= self.columns - 1 {
             return self.getElement(i: i + 1, j: j)
         }
+        return nil
+    }
+
+    /**
+    Get the number of misplaced cards
+     */
+    func misplacedCards() -> [Card] {
+        var misplacedCards: [Card] = []
+
+        for i in 0..<self.columns {
+            for j in 0..<self.rows {
+                let card = self.getElement(i: i, j: j)
+
+                if card == nil {
+                    continue
+                }
+
+                if card?.cardNumber.rawValue != i {
+                    misplacedCards.append(card!)
+                }
+            }
+        }
+
+        return misplacedCards
+    }
+
+    /**
+     Is the GameState equals to an another one
+     */
+    func isEquals(to: GameState) -> Bool {
+        for i in 0..<self.capacity {
+            let cardA = self.getElement(number: i)
+            let cardB = to.getElement(number: i)
+
+            if cardA?.number != cardB?.number {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    /**
+     Best first search
+     */
+    func bfs() -> GameState? {
+        var queue: [GameState] = []
+        var visited: [GameState] = []
+
+        queue.append(self)
+
+        while queue.count > 0 {
+            let state = queue.removeFirst()
+
+            if state.isSolved {
+                return state
+            }
+
+            state.computeMoves()
+
+            for move in state._moves {
+                let newState = move.state
+                newState.computeMoves()
+
+                if !visited.contains(where: { state in
+                    state.isEquals(to: newState)
+                }) {
+                    queue.append(newState)
+                    visited.append(newState)
+                }
+            }
+        }
+
+        return nil
+    }
+
+    /**
+     Branch and bound
+     */
+    func branchAndBound(maxClosed: Int = Int.max) async -> GameState? {
+        var queue: [GameState] = []
+        var visited: [GameState] = []
+
+        queue.append(self)
+        var bestState: GameState = self.copy()
+
+        while queue.count > 0 {
+            let state = queue.removeFirst()
+
+            if state.isSolved {
+                return state
+            } else if state.cost < bestState.cost {
+                bestState = state
+            }
+
+            state.computeMoves()
+
+            for move in state._moves {
+                let newState = move.state
+                newState.computeMoves()
+
+                if !visited.contains(where: { state in
+                    state.isEquals(to: newState)
+                }) {
+                    queue.append(newState)
+                    visited.append(newState)
+                }
+            }
+            
+            if visited.count >= maxClosed {
+                return bestState
+            }
+        }
+
+        return nil
+    }
+    
+    /**
+     A star algorithm
+     */
+    func astar(maxClosed: Int = Int.max) async -> GameState? {
+        var open: [GameState] = []
+        var closed: [GameState] = []
+        
+        var bestState: GameState = self.copy()
+
+        open.append(self)
+        
+        var i: Int = 0
+
+        while open.count > 0 {
+            let state = open.removeFirst()
+            closed.append(state)
+
+            if state.isSolved {
+                return state
+            }
+
+            state.computeMoves()
+
+            for move in state._moves {
+                let newState = move.state
+                newState.computeMoves()
+                
+                if newState.isSolved {
+                    return newState
+                } else if newState.cost < bestState.cost {
+                    bestState = newState
+                }
+                
+                if !closed.contains(where: { $0.isEquals(to: newState) }) {
+                    open.append(newState)
+                }
+            }
+            
+            if closed.count >= maxClosed {
+                return bestState
+            }
+            
+            i += 1
+        }
+
         return nil
     }
 }

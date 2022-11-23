@@ -8,163 +8,259 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState()
-    @State private var _depth = 0
-    @State private var _selected: Card? = nil
+    private var _state: GameState = GameState()
+    @State private var _bestState: GameState = GameState()
     @State private var _peformMovesSafely: Bool = false
-    
-    var items: [GridItem] = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-    ]
+    @State private var _gaps: Int = 4
+    @State private var _selected: Card? = nil
+    @State private var _performingAlgorithm: Bool = false
+    @State private var _maxClosed: Int = 1000
     
     func generateNewGame() {
         self._selected = nil
-        self._depth = 0
         self._state.reset()
         self._state.shuffle()
-        self._state.removeKings()
+        self._state.remove(.KING)
         self._state.computeMoves()
-        // print(self._state.moves.count)
+        self._bestState.copy(from: self._state)
+    }
+    
+    func reset() {
+        self._selected = nil
+        self._state.reset()
+        self._state.computeMoves()
+        self._bestState.copy(from: self._state)
+    }
+    
+    func shuffle() {
+        self._selected = nil
+        self._state.shuffle()
+        self._state.computeMoves()
+        self._bestState.copy(from: self._state)
+    }
+    
+    func removeRandomly() {
+        self._selected = nil
+        self._state.removeCardsRandomly(numberOfCards: self._gaps)
+        self._state.computeMoves()
+        self._bestState.copy(from: self._state)
+    }
+    
+    func removeKings() {
+        self._selected = nil
+        self._state.remove(.KING)
+        self._state.computeMoves()
+        self._bestState.copy(from: self._state)
+    }
+    
+    func performAstar() {
+        self._performingAlgorithm = true
+        
+        Task {
+            var result: GameState? = self._bestState
+            
+            self._bestState.copy(from: self._state)
+            
+            print("Performing algorithm")
+            
+            while result !== nil {
+                result = await self._bestState.astar(maxClosed: 100)
+                
+                if result === nil {
+                    break
+                }
+                
+                self._bestState.copy(from: result!)
+                print("Better state found")
+            }
+            
+            print("Best state found")
+            
+            self._performingAlgorithm = false
+        }
+    }
+    
+    func performBranchAndBound() {
+        self._performingAlgorithm = true
+        
+        Task {
+            var result: GameState? = self._bestState
+            
+            self._bestState.copy(from: self._state)
+            
+            print("Performing algorithm")
+            
+            while result !== nil {
+                result = await self._bestState.branchAndBound(maxClosed: 100)
+                
+                if result === nil {
+                    break
+                }
+                
+                self._bestState.copy(from: result!)
+                print("Better state found")
+            }
+            
+            print("Best state found")
+            
+            self._performingAlgorithm = false
+        }
+    }
+    
+    func perform(algorithm: @escaping () async -> GameState?) {
+        self._performingAlgorithm = true
+        
+        Task {
+            var result: GameState? = self._bestState
+            
+            self._bestState.copy(from: self._state)
+            
+            print("Performing algorithm")
+            
+            while result !== nil {
+                result = await algorithm()
+                
+                if result === nil {
+                    break
+                }
+                
+                self._bestState.copy(from: result!)
+            }
+            
+            print("Best state finish", self._bestState)
+            self._performingAlgorithm = false
+        }
+    }
+    
+    func changeRows(_ nb: Int) {
+        if !(1...4).contains(self._state.rows + nb) {
+            return
+        }
+        
+        self.reset()
+        self._state.rows += nb
+        self._bestState.copy(from: self._state)
+    }
+    
+    func changeColumns(_ nb: Int) {
+        if !(1...13).contains(self._state.columns + nb) {
+            return
+        }
+        
+        self.reset()
+        self._state.columns += nb
+        self._bestState.copy(from: self._state)
+    }
+    
+    func changeGaps(_ nb: Int) {
+        if !(0..<self._state.capacity).contains(self._gaps + nb) {
+            return
+        }
+        
+        self.reset()
+        self._gaps += nb
+        self._bestState.copy(from: self._state)
     }
     
     func getPositionFromHGridIndex(index: Int) -> (Int, Int) {
-        let line = index % self._state.lines
-        let column = Int(floor(Double(index) / Double(self._state.lines)))
+        let line = index % self._state.rows
+        let column = Int(floor(Double(index) / Double(self._state.rows)))
         return (column, line)
     }
     
     var body: some View {
         ScrollView {
             VStack {
-                Text("Gaps").font(.system(size: 20)).bold()
+                VStack {
+                    Text("Main game").font(.system(size: 20)).bold()
+                    
+                    StateUI(
+                        state: self._state,
+                        selected: self.$_selected,
+                        peformMovesSafely: self.$_peformMovesSafely
+                    )
+                }
                 
-                Spacer(minLength: 20)
-                
-                Text("Depth: \(_depth)")
-                Group {
-                    LazyHGrid(rows: items) {
-                        ForEach(Array(self._state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
-                            Group {
-                                if card != nil {
-                                    Image("\(card!.cardColor)_\(card!.cardNumber)")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .onTapGesture {
-                                            if self._selected === nil {
-                                                self._selected = card
-                                            } else if self._selected === card {
-                                                self._selected = nil
-                                            }
-                                        }
-                                        .padding(3)
-                                        .cornerRadius(5)
-                                        .if(self._selected === card, transform: { view in
-                                            view.overlay(
-                                                RoundedRectangle(cornerRadius: 5)
-                                                    .stroke(.blue, lineWidth: 3)
-                                            )
-                                        })
-                                            .if(self._state.isMovable(card: card!) && self._selected === nil, transform: { view in
-                                                view.overlay(
-                                                    RoundedRectangle(cornerRadius: 5)
-                                                        .stroke(.red, lineWidth: 3)
-                                                )
-                                            })
-                                } else {
-                                    Spacer()
-                                        .frame(width: 80, height: 118, alignment: .center)
-                                        .background(Color(red: 0.5, green: 0.5, blue: 0.5))
-                                        .cornerRadius(5)
-                                        .padding(3)
-                                        .opacity(self._state.isAPossibleGap(card: self._selected, gap: getPositionFromHGridIndex(index: index)) ? 0.4 : 0.1)
-                                        .onTapGesture {
-                                            if self._selected === nil {
-                                                return
-                                            }
-                                            
-                                            let pos = self.getPositionFromHGridIndex(index: index)
-                                            let m = Move(card: self._selected!, to: pos, state: self._state)
-                                            self._state.performMove(move: m, verify: self._peformMovesSafely)
-                                            self._selected = nil
-                                            
-                                            self._state.computeMoves()
-                                        }
-                                        .if(self._state.isAPossibleGap(card: self._selected, gap: getPositionFromHGridIndex(index: index)), transform: { view in
-                                            view
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 5)
-                                                        .stroke(.red, lineWidth: 3)
-                                                )
-                                        })
+                VStack(spacing: 25) {
+                    HStack {
+                        Stepper("\(self._state.rows) rows", onIncrement: {
+                            self.changeRows(1)
+                        }, onDecrement: {
+                            self.changeRows(-1)
+                        })
+                        
+                        Stepper("\(self._state.columns) columns", onIncrement: {
+                            self.changeColumns(1)
+                        }, onDecrement: {
+                            self.changeColumns(-1)
+                        })
+                        
+                        Stepper("\(self._gaps) gaps", onIncrement: {
+                            self.changeGaps(1)
+                        }, onDecrement: {
+                            self.changeGaps(-1)
+                        })
+                    }.disabled(self._performingAlgorithm)
+                    
+                    HStack {
+                        Button("Generate new game", action: self.generateNewGame)
+                        Button("Shuffle", action: self.shuffle)
+                        Button("Reset", action: self.reset)
+                        Button("Remove randomly", action: self.removeRandomly)
+                        Button("Remove Kings", action: self.removeKings)
+                        Toggle("Apply move verification", isOn: self.$_peformMovesSafely)
+                    }.disabled(self._performingAlgorithm)
+                    
+                    HStack {
+                        TextField("Max closed", text: Binding(
+                            get: { String(self._maxClosed) },
+                            set: { self._maxClosed = Int($0) ?? 1000 }
+                        )).frame(width: 50)
+                        
+                        Button("Perform A*", action: self.performAstar)
+                        Button("Perform Branch and bound", action: self.performBranchAndBound)
+                    }.disabled(self._performingAlgorithm)
+                    
+                    if self._performingAlgorithm {
+                        HStack {
+                            ProgressView()
+                        }
+                    }
+                    
+                    if self._performingAlgorithm == false {
+                        VStack {
+                            Text("\(self._state.moves.count) Children states found").bold()
+                            
+                            VStack {
+                                ForEach(self._state.moves, id: \.state.description) { move in
+                                    Button(move.description, action: {
+                                        self._state.performMove(move: move)
+                                    })
                                 }
                             }
                         }
                     }
                 }
-                .frame(minHeight: 500, idealHeight: 500)
                 
-                Group {
-                    LazyHGrid (rows: [GridItem(.flexible())]) {
-                        ForEach(self._state.removedCards, id: \.description) {card in
-                            Image("\(card.cardColor)_\(card.cardNumber)")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                        }
-                    }
-                }
-                .frame(maxHeight: 100)
-                .opacity(0.5)
+                Spacer(minLength: 100)
                 
-                HStack {
-                    Button("Generate new game", action: self.generateNewGame)
+                VStack {
+                    Text("Algorithm tracing").font(.system(size: 20)).bold()
                     
-                    Button("Reset", action: {
-                        self._selected = nil
-                        self._state.reset()
-                        self._depth = 0
-                    })
-                    
-                    Button("Remove Kings", action: {
-                        self._selected = nil
-                        self._state.removeKings()
-                        self._state.computeMoves()
-                    })
-                    
-                    Button("Shuffle", action: {
-                        self._selected = nil
-                        self._state.shuffle()
-                        self._state.computeMoves()
-                    })
-                    
-                    Toggle(isOn: self.$_peformMovesSafely) {
-                        Text("Apply move verification")
-                    }
-                }
-                
-                Spacer(minLength: 50)
-                
-                Group {
-                    Text("\(self._state.moves.count) Children states found").bold()
-                    ForEach(self._state.moves, id: \.state.description) { move in
-                        Button(move.description, action: {
-                            self._state.performMove(move: move)
-                            self._depth += 1
-                        })
-                    }
+                    StateUI(
+                        state: self._bestState,
+                        selected: Binding.constant(nil),
+                        peformMovesSafely: Binding.constant(false)
+                    ).opacity(0.7)
                 }
             }
         }
-        .onAppear() { }
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding()
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .previewLayout(.fixed(width: 1000, height: 1000))
     }
 }

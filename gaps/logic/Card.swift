@@ -62,7 +62,7 @@ class Card: CustomStringConvertible {
      ♥ [26, 38] - HEART
      ♠ [39, 51] - SPADE
      */
-    public static func fromNumber(number: Int) -> Card {
+    public static func fromNumber(number: Int, columns: Int = 13) -> Card {
         assert(number >= 0, "The number should be greater than 0")
         assert(number <= 51, "The number should be smaller than 51")
         
@@ -75,7 +75,7 @@ class Card: CustomStringConvertible {
             }
         }
         
-        let n = Int((number) % 13)
+        let n = Int(number % columns)
         let cardNumber: CardNumbers? = CardNumbers(rawValue: n)
         
         return Card(color: cardColor!, number: cardNumber!)
@@ -87,6 +87,20 @@ class Card: CustomStringConvertible {
     func isEquals(to: Card?) -> Bool {        
         return (
             self.cardNumber == to?.cardNumber &&
+            self.cardColor == to?.cardColor
+        )
+    }
+
+    func isHigher(to: Card?) -> Bool {
+        return (
+            self.cardNumber.rawValue > to?.cardNumber.rawValue ?? 0 &&
+            self.cardColor == to?.cardColor
+        )
+    }
+
+    func isStrictlyOneHigher(to: Card?) -> Bool {
+        return (
+            self.cardNumber.rawValue == to?.cardNumber.rawValue ?? 0 + 1 &&
             self.cardColor == to?.cardColor
         )
     }

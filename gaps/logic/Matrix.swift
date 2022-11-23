@@ -10,13 +10,14 @@ import Foundation
 class Matrix<T>: CustomStringConvertible, ObservableObject {
     @Published private var _repr: [[T]]
     private var _columns: Int
-    private var _lines: Int
+    private var _rows: Int
+    private var _defaultValue: (Int, Int, Int) -> T
     
     var description: String {
         get {
-            var s = "(\(self._columns)x\(self._lines))\n"
+            var s = "(\(self._columns)x\(self._rows))\n"
             
-            for j in 0 ..< self._lines {
+            for j in 0 ..< self._rows {
                 for i in 0 ..< self._columns {
                     s += String(describing: self.getElement(i: i, j: j)) + " "
                 }
@@ -28,32 +29,46 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     var capacity: Int {
-        get { return self._columns * self._lines }
+        get { return self._columns * self._rows }
     }
     
     var columns: Int {
         get { return self._columns }
+        set {
+            self._columns = newValue
+            refresh()
+        }
     }
     
-    var lines: Int {
-        get { return self._lines }
+    var rows: Int {
+        get { return self._rows }
+        set {
+            self._rows = newValue
+            refresh()
+        }
     }
     
-    init(columns: Int, lines: Int, defaultValue: (Int, Int, Int) -> T) {
-        self._repr = []
-        self._columns = columns
-        self._lines = lines
-        
+    private func refresh() {
         var c = 0
-        for j in 0..<lines {
+        for j in 0..<rows {
             self._repr.append([])
+            
             for i in 0..<columns {
-                let v = defaultValue(i, j, c)
+                let v = self._defaultValue(i, j, c)
                 self._repr[j].append(v)
                 
                 c += 1
             }
         }
+    }
+    
+    init(columns: Int, rows: Int, defaultValue: @escaping (Int, Int, Int) -> T) {
+        self._repr = []
+        self._columns = columns
+        self._rows = rows
+        self._defaultValue = defaultValue
+        
+        refresh()
     }
     
     /**
@@ -62,11 +77,20 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func copy() -> Matrix<T> {
         return Matrix<T>(
             columns: self._columns,
-            lines: self._lines,
+            rows: self._rows,
             defaultValue: {(i, j, _) in
                 return self.getElement(i: i, j: j)
             }
         )
+    }
+
+    func copy(from: Matrix<T>) {        
+        self._columns = from._columns
+        self._rows = from._rows
+        
+        self.forEach(cb: { i, j, card, c in
+            self.setElement(i: i, j: j, value: from.getElement(i: i, j: j))
+        })
     }
     
     func getElement(i: Int, j: Int) -> T {
@@ -194,7 +218,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func forEach(cb: (Int, Int, T, Int) -> ()) {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
-            for j in 0 ..< self._lines {
+            for j in 0 ..< self._rows {
                 for i in 0 ..< self._columns {
                     cb(i, j, self.getElement(i: i, j: j), count)
                     count += 1
@@ -210,7 +234,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         DispatchQueue.global(qos: .background).sync {
             var count = 0
             for i in 0 ..< self._columns {
-                for j in 0 ..< self._lines {
+                for j in 0 ..< self._rows {
                     cb(i, j, self.getElement(i: i, j: j), count)
                     count += 1
                 }
@@ -223,7 +247,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      */
     func forEachSync(cb: (Int, Int, T, Int) -> (), lineChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
-        for j in 0 ..< self._lines {
+        for j in 0 ..< self._rows {
             for i in 0 ..< self._columns {
                 cb(i, j, self.getElement(i: i, j: j), count)
                 count += 1
@@ -238,7 +262,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func forEachTopBottomSync(cb: (Int, Int, T, Int) -> (), columnChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
         for i in 0 ..< self._columns {
-            for j in 0 ..< self._lines {
+            for j in 0 ..< self._rows {
                 cb(i, j, self.getElement(i: i, j: j), count)
                 count += 1
             }
