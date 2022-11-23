@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var _state: GameState = GameState()
+    @StateObject private var _state: GameState = GameState()
     @State private var _bestState: GameState = GameState()
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4

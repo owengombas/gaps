@@ -11,7 +11,7 @@ import Foundation
  Represent a game state
  */
 class GameState: Matrix<Card?> {
-    private var _moves: [Move] = []
+    @Published private var _moves: [Move] = []
     private var _removedCards: [Card] = []
     
     /**
