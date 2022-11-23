@@ -11,6 +11,7 @@ struct StateUI: View {
     @StateObject var state: GameState
     @Binding var selected: Card?
     @Binding var peformMovesSafely: Bool
+    @Binding var blockMove: Bool
     
     var onCardChange: ((Card, (Int, Int)) -> Void)?
     
@@ -21,6 +22,10 @@ struct StateUI: View {
     }
     
     func onCardTap(card: Card?) {
+        if self.blockMove {
+            return
+        }
+        
         if self.selected === nil {
             self.selected = card
         } else if self.selected === card {
@@ -29,6 +34,10 @@ struct StateUI: View {
     }
     
     func onGapTap(index: Int) {
+        if self.blockMove {
+            return
+        }
+        
         if self.selected === nil {
             return
         }
@@ -46,7 +55,13 @@ struct StateUI: View {
     
     var body: some View {        
         VStack {
-            Text("Score: \(self.state.score)").font(.system(size: 20)).bold()
+            VStack(spacing: 2) {
+                Text("Score: \(self.state.score)").font(.system(size: 20)).bold()
+                
+                if self.state.isSolved {
+                    Text("Solved").font(.system(size: 10)).bold()
+                }
+            }
             
             Group {
                 LazyHGrid(rows: Array(repeating: GridItem(.flexible()), count: self.state.rows)) {
@@ -111,7 +126,6 @@ struct StateUI: View {
             .opacity(0.5)
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding()
     }
 }
 
