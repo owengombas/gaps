@@ -102,12 +102,11 @@ class GameState: Matrix<Card?> {
     /**
      Reset and rearrange the game to it's initial state
      */
-    func reset() {
+    override func reset() {
+        super.reset()
+        
         self._moves = []
         self._removedCards = []
-        self.forEach(cb: {(i, j, v, c) in
-            return self.setElement(i: i, j: j, value: Card.fromNumber(number: c, columns: self.columns))
-        })
     }
     
     /**
@@ -123,12 +122,12 @@ class GameState: Matrix<Card?> {
      Remove the king cards from the game
      */
     func remove(_ cardNumber: CardNumbers) {
-        self.forEach(cb: {i, j, v, c in
+        self.forEach {i, j, v, c, m in
             if v?.cardNumber == cardNumber {
                 self.setElement(i: i, j: j, value: nil)
                 self._removedCards.append(v!)
             }
-        })
+        }
     }
     
     /**
@@ -166,7 +165,7 @@ class GameState: Matrix<Card?> {
     private func getMovesFor(cardNumber: CardNumbers, emptySpace: (Int, Int)) -> [Move] {
         var acesMoves: [Move] = []
         
-        self.forEach(cb: {i, j, c, v in
+        self.forEach {i, j, c, v, m in
             if (c?.cardNumber == cardNumber) {
                 let childrenState: GameState = self.copy()
                 childrenState.swap(posA: (i, j), posB: emptySpace)
@@ -175,7 +174,7 @@ class GameState: Matrix<Card?> {
                 
                 acesMoves.append(move)
             }
-        })
+        }
         
         return acesMoves
     }

@@ -15,10 +15,12 @@ struct ContentView: View {
     @State private var _selected: Card? = nil
     @State private var _performingAlgorithm: Bool = false
     @State private var _maxClosed: Int = 100
+    @State private var _logs: String = ""
+    @State private var _algorithmTask: Task<Void, Error>? = nil
     
     func generateNewGame() {
         self._selected = nil
-        self._state.reset()
+        self._state.refresh()
         self._state.shuffle()
         self._state.remove(.KING)
         self._state.computeMoves()
@@ -59,33 +61,49 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(algorithm: @escaping () async -> GameState?) {
+    func perform(name: String = "", algorithm: @escaping () async -> GameState?) {
+        self.writeLog()
         self._performingAlgorithm = true
         
-        Task {
+        self._algorithmTask = Task {
             var result: GameState? = self._bestState
             
             self._bestState.copy(from: self._state)
             
-            print("Performing algorithm", self._maxClosed)
+            self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
             
-            while result !== nil {
+            while true {
+                try Task.checkCancellation()
+                
                 result = await algorithm()
                 
+                try Task.checkCancellation()
+                
+                self.writeLog(logs: "Better state found")
+                
                 if result === nil {
+                    self.writeLog(logs: "Leaf rechead")
                     break
                 }
                 
                 self._bestState.copy(from: result!)
                 
                 if result!.isSolved {
-                    print("Game solved")
+                    self.writeLog(logs: "Game solved")
+                    break
                 }
+                
+                try Task.checkCancellation()
             }
             
-            print("Best state finish", self._bestState)
             self._performingAlgorithm = false
         }
+    }
+    
+    func interruptCurrentTask() {
+        self._algorithmTask?.cancel()
+        self._performingAlgorithm = false
+        self.writeLog(logs: "Task canceled")
     }
     
     func changeRows(_ nb: Int) {
@@ -121,6 +139,24 @@ struct ContentView: View {
     
     func onCardChangeAlgorithm(card: Card, to: (Int, Int)) {
         self._state.copy(from: self._bestState)
+    }
+    
+    func writeLog(logs: Any..., lineReturn: Bool = true) {
+        if logs.isEmpty {
+            self._logs = ""
+            return
+        }
+        
+        print(logs)
+        
+        if lineReturn {
+            self._logs += "\n"
+        }
+        
+        for log in logs {
+            self._logs += String(describing: log)
+            self._logs += " "
+        }
     }
     
     var body: some View {
@@ -176,9 +212,9 @@ struct ContentView: View {
                                     set: { self._maxClosed = Int($0) ?? 100 }
                                 )).frame(width: 50)
                                 
-                                Button("Perform A*") {
-                                    self.perform {
-                                        return await self._bestState.astar(maxClosed: self._maxClosed)
+                                Button("Perform Branch and bound") {
+                                    self.perform(name: "branch and bound") {
+                                        return await self._bestState.branchAndBound(maxClosed: self._maxClosed)
                                     }
                                     
                                     withAnimation {
@@ -186,9 +222,9 @@ struct ContentView: View {
                                     }
                                 }
                                 
-                                Button("Perform Branch and bound") {
-                                    self.perform {
-                                        return await self._bestState.branchAndBound(maxClosed: self._maxClosed)
+                                Button("Perform A*") {
+                                    self.perform(name: "A*") {
+                                        return await self._bestState.astar(maxClosed: self._maxClosed)
                                     }
                                     
                                     withAnimation {
@@ -221,7 +257,7 @@ struct ContentView: View {
                             selected: self.$_selected,
                             peformMovesSafely: self.$_peformMovesSafely,
                             blockMove: self.$_performingAlgorithm,
-                            onCardChange: onCardChangeAlgorithm
+                            onCardChange: self.onCardChangeAlgorithm
                         )
                         
                         if self._performingAlgorithm {
@@ -230,13 +266,19 @@ struct ContentView: View {
                             }
                         }
                         
-                        Button("Apply to main game") {
-                            withAnimation {
-                                scroll.scrollTo("title", anchor: .top)
-                            }
-                            
-                            self.copyBestStateToMainGame()
-                        }.disabled(self._performingAlgorithm)
+                        if self._performingAlgorithm {
+                            Button("Stop execution", action: self.interruptCurrentTask).disabled(!self._performingAlgorithm)
+                        } else {
+                            Button("Apply to main game") {
+                                withAnimation {
+                                    scroll.scrollTo("title", anchor: .top)
+                                }
+                                
+                                self.copyBestStateToMainGame()
+                            }.disabled(self._performingAlgorithm)
+                        }
+                        
+                        TextEditor(text: .constant(self._logs)).disabled(true)
                     }
                 }.padding(20)
             }
