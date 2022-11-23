@@ -84,13 +84,15 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         )
     }
 
-    func copy(from: Matrix<T>) {        
-        self._columns = from._columns
-        self._rows = from._rows
-        
-        self.forEach(cb: { i, j, card, c in
-            self.setElement(i: i, j: j, value: from.getElement(i: i, j: j))
-        })
+    func copy(from: Matrix<T>) {
+        DispatchQueue.main.async {
+            self._columns = from._columns
+            self._rows = from._rows
+            
+            self.forEach(cb: { i, j, card, c in
+                self.setElement(i: i, j: j, value: from.getElement(i: i, j: j))
+            })
+        }
     }
     
     func getElement(i: Int, j: Int) -> T {
@@ -107,9 +109,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     func setElement(i: Int, j: Int, value: T) {
-        DispatchQueue.main.async {
-            self._repr[j][i] = value
-        }
+        self._repr[j][i] = value
     }
     
     func setElement(position: (Int, Int), value: T) {
