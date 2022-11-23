@@ -107,7 +107,9 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     func setElement(i: Int, j: Int, value: T) {
-        self._repr[j][i] = value
+        DispatchQueue.main.async {
+            self._repr[j][i] = value
+        }
     }
     
     func setElement(position: (Int, Int), value: T) {

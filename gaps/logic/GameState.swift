@@ -100,8 +100,11 @@ class GameState: Matrix<Card?> {
     
     func copy(from: GameState) {
         super.copy(from: from)
-        self._removedCards = from.removedCards
-        self._moves = from.moves
+        
+        DispatchQueue.main.async {
+            self._removedCards = from.removedCards
+            self._moves = from.moves
+        }
     }
     
     /**
