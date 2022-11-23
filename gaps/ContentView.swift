@@ -162,10 +162,8 @@ struct ContentView: View {
         self._bestState.copy(from: self._state)
     }
     
-    func getPositionFromHGridIndex(index: Int) -> (Int, Int) {
-        let line = index % self._state.rows
-        let column = Int(floor(Double(index) / Double(self._state.rows)))
-        return (column, line)
+    func onCardChange(card: Card, to: (Int, Int)) {
+        self._bestState.copy(from: self._state)
     }
     
     var body: some View {
@@ -177,7 +175,8 @@ struct ContentView: View {
                     StateUI(
                         state: self._state,
                         selected: self.$_selected,
-                        peformMovesSafely: self.$_peformMovesSafely
+                        peformMovesSafely: self.$_peformMovesSafely,
+                        onCardChange: onCardChange
                     )
                 }
                 
@@ -250,7 +249,8 @@ struct ContentView: View {
                     StateUI(
                         state: self._bestState,
                         selected: Binding.constant(nil),
-                        peformMovesSafely: Binding.constant(false)
+                        peformMovesSafely: Binding.constant(false),
+                        onCardChange: nil
                     ).opacity(0.7)
                 }
             }
