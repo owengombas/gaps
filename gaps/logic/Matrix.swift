@@ -11,7 +11,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     @Published private var _repr: [[T]]
     private var _columns: Int
     private var _rows: Int
-    private var _defaultValue: (Int, Int, Int) -> T
+    private var _defaultValue: (Int, Int, Int, Matrix<T>) -> T
     
     var description: String {
         get {
@@ -50,11 +50,11 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     
     private func refresh() {
         var c = 0
-        for j in 0..<rows {
+        for j in 0..<self.rows {
             self._repr.append([])
             
-            for i in 0..<columns {
-                let v = self._defaultValue(i, j, c)
+            for i in 0..<self.columns {
+                let v = self._defaultValue(i, j, c, self)
                 self._repr[j].append(v)
                 
                 c += 1
@@ -62,7 +62,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         }
     }
     
-    init(columns: Int, rows: Int, defaultValue: @escaping (Int, Int, Int) -> T) {
+    init(columns: Int, rows: Int, defaultValue: @escaping (Int, Int, Int, Matrix<T>) -> T) {
         self._repr = []
         self._columns = columns
         self._rows = rows
@@ -78,7 +78,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         return Matrix<T>(
             columns: self._columns,
             rows: self._rows,
-            defaultValue: {(i, j, _) in
+            defaultValue: {(i, j, _, _) in
                 return self.getElement(i: i, j: j)
             }
         )
@@ -218,13 +218,11 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      Perform an async forEach loop from left to right order
      */
     func forEach(cb: (Int, Int, T, Int) -> ()) {
-        DispatchQueue.global(qos: .background).sync {
-            var count = 0
-            for j in 0 ..< self._rows {
-                for i in 0 ..< self._columns {
-                    cb(i, j, self.getElement(i: i, j: j), count)
-                    count += 1
-                }
+        var count = 0
+        for j in 0 ..< self._rows {
+            for i in 0 ..< self._columns {
+                cb(i, j, self.getElement(i: i, j: j), count)
+                count += 1
             }
         }
     }
@@ -233,42 +231,12 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      Perform an async forEach loop from top to bottom order
      */
     func forEachTopBottom(cb: (Int, Int, T, Int) -> ()) {
-        DispatchQueue.global(qos: .background).sync {
-            var count = 0
-            for i in 0 ..< self._columns {
-                for j in 0 ..< self._rows {
-                    cb(i, j, self.getElement(i: i, j: j), count)
-                    count += 1
-                }
-            }
-        }
-    }
-    
-    /**
-     Perform a synchronous forEach loop from left to right order
-     */
-    func forEachSync(cb: (Int, Int, T, Int) -> (), lineChangedCb: (Int, Int) -> () = {(_, _) in }) {
-        var count = 0
-        for j in 0 ..< self._rows {
-            for i in 0 ..< self._columns {
-                cb(i, j, self.getElement(i: i, j: j), count)
-                count += 1
-            }
-            lineChangedCb(j, count)
-        }
-    }
-    
-    /**
-     Perform a synchronous forEach loop from top to bottom order
-     */
-    func forEachTopBottomSync(cb: (Int, Int, T, Int) -> (), columnChangedCb: (Int, Int) -> () = {(_, _) in }) {
         var count = 0
         for i in 0 ..< self._columns {
             for j in 0 ..< self._rows {
                 cb(i, j, self.getElement(i: i, j: j), count)
                 count += 1
             }
-            columnChangedCb(i, count)
         }
     }
     

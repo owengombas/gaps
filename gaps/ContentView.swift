@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    private var _state: GameState = GameState()
+    @State private var _state: GameState = GameState()
     @State private var _bestState: GameState = GameState()
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4
@@ -64,13 +64,18 @@ struct ContentView: View {
             print("Performing algorithm")
             
             while result !== nil || !self._bestState.isSolved {
-                result = await self._bestState.astar(maxClosed: 100)
+                result = await self._bestState.astar(maxClosed: self._maxClosed)
                 
                 if result === nil {
                     break
                 }
                 
                 self._bestState.copy(from: result!)
+                
+                if result!.isSolved {
+                    break
+                }
+                
                 print("Better state found")
             }
             
@@ -90,14 +95,19 @@ struct ContentView: View {
             
             print("Performing algorithm")
             
-            while result !== nil || !self._bestState.isSolved {
-                result = await self._bestState.branchAndBound(maxClosed: 100)
+            while result !== nil {
+                result = await self._bestState.branchAndBound(maxClosed: self._maxClosed)
                 
                 if result === nil {
                     break
                 }
                 
                 self._bestState.copy(from: result!)
+                
+                if result!.isSolved {
+                    break
+                }
+                
                 print("Better state found")
             }
             
@@ -137,7 +147,6 @@ struct ContentView: View {
             return
         }
         
-        self.reset()
         self._state.rows += nb
         self._bestState.copy(from: self._state)
     }
@@ -147,7 +156,6 @@ struct ContentView: View {
             return
         }
         
-        self.reset()
         self._state.columns += nb
         self._bestState.copy(from: self._state)
     }
@@ -157,7 +165,6 @@ struct ContentView: View {
             return
         }
         
-        self.reset()
         self._gaps += nb
         self._bestState.copy(from: self._state)
     }

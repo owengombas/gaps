@@ -11,7 +11,7 @@ import Foundation
  Represent a game state
  */
 class GameState: Matrix<Card?> {
-    @Published private var _moves: [Move] = []
+    private var _moves: [Move] = []
     private var _removedCards: [Card] = []
     
     /**
@@ -54,34 +54,26 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Get the cost of the game state
+     Get the score of the game state
      */
-    var cost: Int {
+    var score: Int {
         get { return self.misplacedCards().count }
     }
     
-    private static func initFunc(columns: Int) -> ((Int, Int, Int) -> Card?) {
-        return {(_, _, c) in
-            return Card.fromNumber(number: c, columns: columns)
-        }
-    }
-    
-    init() {
-        super.init(
-            columns: 13,
-            rows: 4,
-            defaultValue: GameState.initFunc(columns: 13)
-        )
+    convenience init() {
+        self.init(columns: 13, rows: 4)
     }
     
     init(columns: Int, rows: Int) {
-        assert(columns <= 13, "Columns must be lower than 13")
-        assert(rows <= 4, "Rows must be lower than 4")
+        assert((1...13).contains(columns), "Columns must be in [1, 13]")
+        assert((1...4).contains(rows), "Rows must be in [1, 4]")
         
         super.init(
             columns: columns,
             rows: rows,
-            defaultValue: GameState.initFunc(columns: columns)
+            defaultValue: { (_, _, c, m) in
+                return Card.fromNumber(number: c, columns: m.columns)
+            }
         )
     }
     
@@ -467,7 +459,7 @@ class GameState: Matrix<Card?> {
 
             if state.isSolved {
                 return state
-            } else if state.cost < bestState.cost {
+            } else if state.score < bestState.score {
                 bestState = state
             }
 
@@ -522,7 +514,7 @@ class GameState: Matrix<Card?> {
                 
                 if newState.isSolved {
                     return newState
-                } else if newState.cost < bestState.cost {
+                } else if newState.score < bestState.score {
                     bestState = newState
                 }
                 

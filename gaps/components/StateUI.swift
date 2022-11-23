@@ -46,7 +46,7 @@ struct StateUI: View {
     
     var body: some View {        
         VStack {
-            Text("Cost: \(self.state.cost)").font(.system(size: 20)).bold()
+            Text("Score: \(self.state.score)").font(.system(size: 20)).bold()
             
             Group {
                 LazyHGrid(rows: Array(repeating: GridItem(.flexible()), count: self.state.rows)) {
