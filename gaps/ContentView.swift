@@ -65,12 +65,12 @@ struct ContentView: View {
         self.writeLog()
         self._performingAlgorithm = true
         
+        self._bestState.copy(from: self._state)
+        
+        self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
+        
         self._algorithmTask = Task {
             var result: GameState? = self._bestState
-            
-            self._bestState.copy(from: self._state)
-            
-            self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
             
             while true {
                 try Task.checkCancellation()

@@ -396,10 +396,14 @@ class GameState: Matrix<Card?> {
     /**
      Is the GameState equals to an another one
      */
-    func isEquals(to: GameState) -> Bool {
+    func isEquals(to: GameState?) -> Bool {
+        if to === nil {
+            return false
+        }
+        
         for i in 0..<self.capacity {
             let cardA = self.getElement(number: i)
-            let cardB = to.getElement(number: i)
+            let cardB = to!.getElement(number: i)
 
             if cardA?.number != cardB?.number {
                 return false
@@ -481,7 +485,7 @@ class GameState: Matrix<Card?> {
             }
         }
 
-        return nil
+        return bestState
     }
     
     /**
@@ -529,6 +533,6 @@ class GameState: Matrix<Card?> {
             i += 1
         }
 
-        return nil
+        return bestState
     }
 }
