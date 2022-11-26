@@ -13,6 +13,7 @@ import Foundation
 class GameState: Matrix<Card?> {
     @Published private var _moves: [Move] = []
     private var _removedCards: [Card] = []
+    private var _parent: GameState? = nil
     
     /**
      The gapses positions
@@ -58,6 +59,11 @@ class GameState: Matrix<Card?> {
      */
     var score: Int {
         get { return self.misplacedCards().count }
+    }
+    
+    var parent: GameState? {
+        get { return self._parent }
+        set { self._parent = newValue }
     }
     
     convenience init() {
@@ -168,9 +174,16 @@ class GameState: Matrix<Card?> {
         self.forEach {i, j, c, v, m in
             if (c?.cardNumber == cardNumber) {
                 let childrenState: GameState = self.copy()
+                childrenState.parent = self
                 childrenState.swap(posA: (i, j), posB: emptySpace)
                 
-                let move = Move(from: (i, j), to: emptySpace, card: c!, state: childrenState)
+                let move = Move(
+                    from: (i, j),
+                    to: emptySpace,
+                    card: c!,
+                    state: childrenState,
+                    parentState: self
+                )
                 
                 acesMoves.append(move)
             }
@@ -217,9 +230,16 @@ class GameState: Matrix<Card?> {
             
             // Copy current state, move the card to the gap and add it to children moves
             let childrenState: GameState = self.copy()
+            childrenState.parent = self
             childrenState.swap(posA: gap, posB: higherLeftCardPosition!)
             
-            let m = Move(from: higherLeftCardPosition!, to: gap, card: higherLeftCard!, state: childrenState)
+            let m = Move(
+                from: higherLeftCardPosition!,
+                to: gap,
+                card: higherLeftCard!,
+                state: childrenState,
+                parentState: self
+            )
             
             DispatchQueue.main.async {
                 self._moves.append(m)
@@ -277,7 +297,7 @@ class GameState: Matrix<Card?> {
      */
     func performMove(move: Move, verify: Bool = false) {
         if verify == true {
-            if !verifyMove(move: move) {
+            if !self.verifyMove(move: move) {
                 return
             }
         }
