@@ -43,7 +43,7 @@ struct StateUI: View {
         }
         
         let pos = self.getPositionFromHGridIndex(index: index)
-        let m = Move(card: self.selected!, to: pos, state: self.state)
+        let m = Move(card: self.selected!, to: pos, state: self.state, parentState: self.state)
         
         self.state.performMove(move: m, verify: self.peformMovesSafely)
         self.state.computeMoves()
@@ -69,7 +69,7 @@ struct StateUI: View {
                         Group {
                             if card != nil {
                                 // A Card
-                                Image("\(card!.cardColor)_\(card!.cardNumber)")
+                                Image("\(card!.suit)_\(card!.rank)")
                                     .resizable()
                                     .frame(width: 80, height: 118)
                                     .aspectRatio(contentMode: .fit)
@@ -116,7 +116,7 @@ struct StateUI: View {
             Group {
                 LazyHGrid (rows: [GridItem(.flexible())]) {
                     ForEach(self.state.removedCards, id: \.description) {card in
-                        Image("\(card.cardColor)_\(card.cardNumber)")
+                        Image("\(card.suit)_\(card.rank)")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                     }

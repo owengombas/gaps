@@ -1,5 +1,5 @@
 //
-//  CardNumber.swift
+//  CardRank.swift
 //  gaps
 //
 //  Created by owen on 05.10.22.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CardNumbers: Int {
+enum CardRank: Int {
     case ACE    = 0
     case TWO    = 1
     case THREE  = 2

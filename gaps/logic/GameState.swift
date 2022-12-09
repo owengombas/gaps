@@ -127,9 +127,9 @@ class GameState: Matrix<Card?> {
     /**
      Remove the king cards from the game
      */
-    func remove(_ cardNumber: CardNumbers) {
+    func remove(_ cardRank: CardRank) {
         self.forEach {i, j, v, c, m in
-            if v?.cardNumber == cardNumber {
+            if v?.rank == cardRank {
                 self.setElement(i: i, j: j, value: nil)
                 self._removedCards.append(v!)
             }
@@ -166,13 +166,13 @@ class GameState: Matrix<Card?> {
     }
     
     /**
-     Generate all moves for a specific cardNumber to a specific position
+     Generate all moves for a specific card rank to a specific position
      */
-    private func getMovesFor(cardNumber: CardNumbers, emptySpace: (Int, Int)) -> [Move] {
+    private func getMovesFor(cardRank: CardRank, emptySpace: (Int, Int)) -> [Move] {
         var acesMoves: [Move] = []
         
         self.forEach {i, j, c, v, m in
-            if (c?.cardNumber == cardNumber) {
+            if (c?.rank == cardRank) {
                 let childrenState: GameState = self.copy()
                 childrenState.parent = self
                 childrenState.swap(posA: (i, j), posB: emptySpace)
@@ -207,7 +207,7 @@ class GameState: Matrix<Card?> {
                 // If the gap is at the begining of a row, then all aces can fill it
                 if gap.0 <= 0 {
                     DispatchQueue.main.async {
-                        self._moves.append(contentsOf: self.getMovesFor(cardNumber: .ACE, emptySpace: gap))
+                        self._moves.append(contentsOf: self.getMovesFor(cardRank: .ACE, emptySpace: gap))
                     }
                 }
                 continue
@@ -262,7 +262,7 @@ class GameState: Matrix<Card?> {
         
         if previousCard == nil {
             // If the card is an ace and the user wants to move it at the beginning of a row, then it's movable
-            if move.to.0 == 0 && move.card.cardNumber == .ACE {
+            if move.to.0 == 0 && move.card.rank == .ACE {
                 return true
             }
             
@@ -404,7 +404,7 @@ class GameState: Matrix<Card?> {
                     continue
                 }
 
-                if card?.cardNumber.rawValue != i {
+                if card?.rank.rawValue != i {
                     misplacedCards.append(card!)
                 }
             }

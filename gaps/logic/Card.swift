@@ -8,31 +8,40 @@
 import Foundation
 
 class Card: CustomStringConvertible {
-    private var _cardNumber: CardNumbers
-    private var _cardColor: CardColors
+    private var _rank: CardRank
+    private var _suit: CardSuit
     
     var description: String {
         get {
-            return "(\(self._cardNumber), \(self._cardColor), \(self.number))"
+            return "(\(self._rank), \(self._suit), \(self.number))"
         }
     }
     
-    init(color: CardColors, number: CardNumbers) {
-        self._cardColor = color
-        self._cardNumber = number
+    init(suit: CardSuit, rank: CardRank) {
+        self._suit = suit
+        self._rank = rank
     }
     
-    var cardColor: CardColors {
-        get { return self._cardColor }
+    /**
+     The suit of the card (Diamonds, Club, Heart, Spade)
+     */
+    var suit: CardSuit {
+        get { return self._suit }
     }
     
-    var cardNumber: CardNumbers {
-        get { return self._cardNumber }
+    /**
+     The card rank from Ace to King
+     */
+    var rank: CardRank {
+        get { return self._rank }
     }
     
+    /**
+     The number that represents the card in the deck from 0 to 51 (4 \* 13 - 1)
+     */
     var number: Int {
         get {
-            return self._cardColor.rawValue + self._cardNumber.rawValue
+            return self._suit.rawValue + self._rank.rawValue
         }
     }
     
@@ -40,19 +49,19 @@ class Card: CustomStringConvertible {
      Get the higher rank card from the same color
      */
     var higher: Card? {
-        let n: CardNumbers? = CardNumbers.init(rawValue: self.cardNumber.rawValue + 1)
+        let n: CardRank? = CardRank.init(rawValue: self.rank.rawValue + 1)
         
         if n == nil { return nil }
         
-        return Card(color: self._cardColor, number: n!)
+        return Card(suit: self._suit, rank: n!)
     }
     
     var lower: Card? {
-        let n: CardNumbers? = CardNumbers.init(rawValue: self.cardNumber.rawValue - 1)
+        let n: CardRank? = CardRank.init(rawValue: self.rank.rawValue - 1)
         
         if n == nil { return nil }
         
-        return Card(color: self._cardColor, number: n!)
+        return Card(suit: self._suit, rank: n!)
     }
     
     /**
@@ -66,19 +75,19 @@ class Card: CustomStringConvertible {
         assert(number >= 0, "The number should be greater than 0")
         assert(number <= 51, "The number should be smaller than 51")
         
-        var cardColor: CardColors? = nil
+        var suit: CardSuit? = nil
         
-        for color in CardColors.allCases {
+        for color in CardSuit.allCases {
             if (color.rawValue...color.rawValue + 12).contains(number) {
-                cardColor = color
+                suit = color
                 break
             }
         }
         
         let n = Int(number % columns)
-        let cardNumber: CardNumbers? = CardNumbers(rawValue: n)
+        let rank: CardRank? = CardRank(rawValue: n)
         
-        return Card(color: cardColor!, number: cardNumber!)
+        return Card(suit: suit!, rank: rank!)
     }
     
     /**
@@ -86,22 +95,25 @@ class Card: CustomStringConvertible {
      */
     func isEquals(to: Card?) -> Bool {        
         return (
-            self.cardNumber == to?.cardNumber &&
-            self.cardColor == to?.cardColor
+            self.rank == to?.rank &&
+            self.suit == to?.suit
         )
     }
 
+    /**
+     Is the rank of card that is the 
+     */
     func isHigher(to: Card?) -> Bool {
         return (
-            self.cardNumber.rawValue > to?.cardNumber.rawValue ?? 0 &&
-            self.cardColor == to?.cardColor
+            self.rank.rawValue > to?.rank.rawValue ?? 0 &&
+            self.suit == to?.suit
         )
     }
 
     func isStrictlyOneHigher(to: Card?) -> Bool {
         return (
-            self.cardNumber.rawValue == to?.cardNumber.rawValue ?? 0 + 1 &&
-            self.cardColor == to?.cardColor
+            self.rank.rawValue == to?.rank.rawValue ?? 0 + 1 &&
+            self.suit == to?.suit
         )
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CardColors: Int, CaseIterable {
+enum CardSuit: Int, CaseIterable {
     case CLUB    = 0    // ♣
     case DIAMOND = 13   // ♦
     case HEART   = 26   // ♥
