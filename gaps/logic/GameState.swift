@@ -44,7 +44,7 @@ class GameState: Matrix<Card?> {
      Is the GameState final and solved
      */
     var isSolved: Bool {
-        get { return self.misplacedCards().isEmpty }
+        get { return self.misplacedCards() == 0 }
     }
     
     /**
@@ -58,9 +58,12 @@ class GameState: Matrix<Card?> {
      Get the score of the game state
      */
     var score: Int {
-        get { return self.misplacedCards().count }
+        get { return self.misplacedCards() }
     }
     
+    /**
+     The parent GameState that generated the current state
+     */
     var parent: GameState? {
         get { return self._parent }
         set { self._parent = newValue }
@@ -90,12 +93,15 @@ class GameState: Matrix<Card?> {
         let s = GameState()
         
         s.setElements(value: {(i, j, _, _) in
-            return self.getElement(i: i, j: j)
+            return self.getElement(column: i, row: j)
         })
         
         return s
     }
     
+    /**
+     Copy and apply the GameState passed in the from parameter to the current one
+     */
     func copy(from: GameState) {
         super.copy(from: from)
         
@@ -113,6 +119,21 @@ class GameState: Matrix<Card?> {
         
         self._moves = []
         self._removedCards = []
+    }
+    
+    /**
+     Return the path from the root state to the current one as an array
+     */
+    func rewind() -> [GameState] {
+        var states: [GameState] = []
+        var currentState: GameState = self
+
+        while currentState.parent != nil {
+            states.insert(currentState, at: 0)
+            currentState = currentState.parent!
+        }
+
+        return states
     }
     
     /**
@@ -368,7 +389,7 @@ class GameState: Matrix<Card?> {
      */
     func previous(i: Int, j: Int) -> Card? {
         if i - 1 >= 0 {
-            return self.getElement(i: i - 1, j: j)
+            return self.getElement(column: i - 1, row: j)
         }
         return nil
     }
@@ -385,7 +406,7 @@ class GameState: Matrix<Card?> {
      */
     func next(i: Int, j: Int) -> Card? {
         if i + 1 <= self.columns - 1 {
-            return self.getElement(i: i + 1, j: j)
+            return self.getElement(column: i + 1, row: j)
         }
         return nil
     }
@@ -393,24 +414,28 @@ class GameState: Matrix<Card?> {
     /**
     Get the number of misplaced cards
      */
-    func misplacedCards() -> [Card] {
-        var misplacedCards: [Card] = []
+    func misplacedCards() -> Int {
+        var count = 0
 
-        for i in 0..<self.columns {
-            for j in 0..<self.rows {
-                let card = self.getElement(i: i, j: j)
+        for row in 0..<self.rows {
+            let firstCard: Card? = self.getElement(column: 0, row: row)
+            if firstCard === nil { continue }
+        
+            if firstCard!.rank != .ACE { continue }
+            count += 1
 
-                if card == nil {
-                    continue
-                }
+            for column in 1..<self.columns {
+                let card: Card? = self.getElement(column: column, row: row)
 
-                if card?.rank.rawValue != i {
-                    misplacedCards.append(card!)
-                }
+                if card === nil { break }
+                if card!.suit != firstCard!.suit { break }
+                if card!.rank.rawValue != column { break }
+                
+                count += 1
             }
         }
 
-        return misplacedCards
+        return self.capacity - count
     }
 
     /**

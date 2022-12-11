@@ -19,7 +19,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
             
             for j in 0 ..< self._rows {
                 for i in 0 ..< self._columns {
-                    s += String(describing: self.getElement(i: i, j: j)) + " "
+                    s += String(describing: self.getElement(column: i, row: j)) + " "
                 }
                 s += "\n\n"
             }
@@ -84,7 +84,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
             columns: self._columns,
             rows: self._rows,
             defaultValue: {(i, j, _, _) in
-                return self.getElement(i: i, j: j)
+                return self.getElement(column: i, row: j)
             }
         )
     }
@@ -95,22 +95,22 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
             self._rows = from._rows
             
             self.forEach {i, j, card, c, m in
-                self.setElement(i: i, j: j, value: from.getElement(i: i, j: j))
+                self.setElement(i: i, j: j, value: from.getElement(column: i, row: j))
             }
         }
     }
     
-    func getElement(i: Int, j: Int) -> T {
-        return self._repr[j][i]
+    func getElement(column: Int, row: Int) -> T {
+        return self._repr[row][column]
     }
     
     func getElement(position: (Int, Int)) -> T {
-        return getElement(i: position.0, j: position.1)
+        return getElement(column: position.0, row: position.1)
     }
     
     func getElement(number: Int) -> T {
         let pos = self.getPositionFrom(index: number)
-        return self.getElement(i: pos.0, j: pos.1)
+        return self.getElement(column: pos.0, row: pos.1)
     }
     
     func setElement(i: Int, j: Int, value: T) {
@@ -169,8 +169,8 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      Swap two values at specified positions in the matrix
      */
     func swap(i1: Int, i2: Int, j1: Int, j2: Int) {
-        let e1 = self.getElement(i: i1, j: i2)
-        let e2 = self.getElement(i: j1, j: j2)
+        let e1 = self.getElement(column: i1, row: i2)
+        let e2 = self.getElement(column: j1, row: j2)
         self.setElement(i: j1, j: j2, value: e1)
         self.setElement(i: i1, j: i2, value: e2)
     }
@@ -226,7 +226,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         var count = 0
         for j in 0 ..< self._rows {
             for i in 0 ..< self._columns {
-                cb(i, j, self.getElement(i: i, j: j), count, self)
+                cb(i, j, self.getElement(column: i, row: j), count, self)
                 count += 1
             }
         }
@@ -239,7 +239,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         var count = 0
         for i in 0 ..< self._columns {
             for j in 0 ..< self._rows {
-                cb(i, j, self.getElement(i: i, j: j), count, self)
+                cb(i, j, self.getElement(column: i, row: j), count, self)
                 count += 1
             }
         }
@@ -254,11 +254,11 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         
         if fromTopToBottom {
             self.forEachTopBottom {i, j, v, c, m in
-                arr.insert(self.getElement(i: i, j: j), at: c)
+                arr.insert(self.getElement(column: i, row: j), at: c)
             }
         } else {
             self.forEach {i, j, v, c, m  in
-                arr.insert(self.getElement(i: i, j: j), at: c)
+                arr.insert(self.getElement(column: i, row: j), at: c)
             }
         }
         

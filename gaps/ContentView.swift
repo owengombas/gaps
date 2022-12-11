@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var _state: GameState = GameState()
-    @State private var _bestState: GameState = GameState()
+    @StateObject private var _bestState: GameState = GameState()
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4
     @State private var _selected: Card? = nil
@@ -61,40 +61,47 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
+    func wait(seconds: Double) async {
+        try! await Task.sleep(nanoseconds: UInt64(seconds * Double(NSEC_PER_SEC)))
+    }
+    
+    func showBestStateAnimation(bestStatePath: [GameState], seconds: Double) async {
+        for state in bestStatePath {
+            self._bestState.copy(from: state)
+            await wait(seconds: seconds)
+        }
+        self._state.computeMoves()
+    }
+    
     func perform(name: String = "", algorithm: @escaping () async -> GameState?) {
         self.writeLog()
         self._performingAlgorithm = true
-        
         self._bestState.copy(from: self._state)
         
         self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
         
         self._algorithmTask = Task {
-            var result: GameState? = self._bestState
+            let result = await algorithm()
             
-            while true {
-                try Task.checkCancellation()
-                
-                result = await algorithm()
-                
-                try Task.checkCancellation()
-                
-                self.writeLog(logs: "Better state found")
-                
-                if result === nil {
-                    self.writeLog(logs: "Leaf rechead")
-                    break
-                }
-                
-                self._bestState.copy(from: result!)
-                
-                if result!.isSolved {
-                    self.writeLog(logs: "Game solved")
-                    break
-                }
-                
-                try Task.checkCancellation()
+            if result === nil {
+                return
             }
+            
+            let bestStatePath = result!.rewind()
+            
+            if bestStatePath.count < 1 {
+                self.writeLog(logs: "No best states found", lineReturn: true)
+                self._performingAlgorithm = false
+                return
+            }
+            
+            self.writeLog(logs: "Algorithm performed found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
+            
+            await wait(seconds: 1)
+            
+            await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.5)
+            
+            self.writeLog(logs: "Rewinding performed, here is the best state found...", lineReturn: true)
             
             self._performingAlgorithm = false
         }
