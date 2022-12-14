@@ -14,7 +14,7 @@ struct ContentView: View {
     @State private var _gaps: Int = 4
     @State private var _selected: Card? = nil
     @State private var _performingAlgorithm: Bool = false
-    @State private var _maxClosed: Int = 100
+    @State private var _maxClosed: Int = 100000
     @State private var _logs: String = ""
     @State private var _algorithmTask: Task<Void, Error>? = nil
     
@@ -216,7 +216,7 @@ struct ContentView: View {
                             HStack {
                                 TextField("Max closed", text: Binding(
                                     get: { String(self._maxClosed) },
-                                    set: { self._maxClosed = Int($0) ?? 100 }
+                                    set: { self._maxClosed = Int($0) ?? 10000 }
                                 )).frame(width: 50)
                                 
                                 Button("Perform Branch and bound") {

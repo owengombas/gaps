@@ -459,7 +459,7 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Best first search
+     Breadth first search
      */
     func bfs() -> GameState? {
         var queue: [GameState] = []
@@ -523,10 +523,10 @@ class GameState: Matrix<Card?> {
                     queue.append(newState)
                     visited.append(newState)
                 }
-            }
-            
-            if visited.count >= maxClosed {
-                return bestState
+                
+                if visited.count >= maxClosed {
+                    return bestState
+                }
             }
         }
 
@@ -569,10 +569,10 @@ class GameState: Matrix<Card?> {
                 if !closed.contains(where: { $0.isEquals(to: newState) }) {
                     open.append(newState)
                 }
-            }
-            
-            if closed.count >= maxClosed {
-                return bestState
+                
+                if closed.count >= maxClosed {
+                    return bestState
+                }
             }
             
             i += 1
