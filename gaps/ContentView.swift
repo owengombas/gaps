@@ -62,7 +62,7 @@ struct ContentView: View {
     }
     
     func wait(seconds: Double) async {
-        try! await Task.sleep(nanoseconds: UInt64(seconds * Double(NSEC_PER_SEC)))
+        try? await Task.sleep(nanoseconds: UInt64(seconds * Double(NSEC_PER_SEC)))
     }
     
     func showBestStateAnimation(bestStatePath: [GameState], seconds: Double) async {
