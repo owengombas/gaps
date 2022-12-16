@@ -89,7 +89,7 @@ struct ContentView: View {
         
         self._algorithmTask = Task {
             let result = await algorithm()
-            self._timer!.invalidate()
+            self._timer?.invalidate()
             
             if result === nil {
                 return
@@ -193,7 +193,7 @@ struct ContentView: View {
     func onClosedAdded(count: Int) -> Void {
         let percentage = Double(count) / Double(self._maxClosed) * 100
         if percentage.truncatingRemainder(dividingBy: 2) != 0 { return }
-        self.writeLog(logs: "\(String(format: "%.3f", percentage))% completed (\(count) max closed nodes out of \(self._maxClosed) processed)", lineReturn: true)
+        self.writeLog(logs: "\(String(format: "%.0f", percentage))% completed (\(count) max closed nodes out of \(self._maxClosed) processed)", lineReturn: true)
     }
     
     var body: some View {

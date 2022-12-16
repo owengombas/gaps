@@ -468,6 +468,8 @@ class GameState: Matrix<Card?> {
         queue.append(self)
 
         while queue.count > 0 {
+            if Task.isCancelled { break }
+            
             let state = queue.removeFirst()
 
             if state.isSolved {
@@ -477,6 +479,8 @@ class GameState: Matrix<Card?> {
             state.computeMoves()
 
             for move in state._moves {
+                if Task.isCancelled { break }
+                
                 let newState = move.state
                 newState.computeMoves()
 
@@ -507,6 +511,8 @@ class GameState: Matrix<Card?> {
         var bestState: GameState = self.copy()
 
         while open.count > 0 {
+            if Task.isCancelled { break }
+            
             let state = open.removeFirst()
 
             if state.isSolved {
@@ -519,6 +525,8 @@ class GameState: Matrix<Card?> {
             state.computeMoves()
 
             for move in state._moves {
+                if Task.isCancelled { break }
+                
                 let newState = move.state
                 newState.computeMoves()
 
