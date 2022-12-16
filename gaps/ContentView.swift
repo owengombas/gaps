@@ -10,6 +10,8 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var _state: GameState = GameState()
     @StateObject private var _bestState: GameState = GameState()
+    @StateObject private var _tempBestState: GameState = GameState()
+
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4
     @State private var _selected: Card? = nil
@@ -17,6 +19,8 @@ struct ContentView: View {
     @State private var _maxClosed: Int = 100000
     @State private var _logs: String = ""
     @State private var _algorithmTask: Task<Void, Error>? = nil
+    @State private var _timer: Timer? = nil
+    @State private var _time: Double = 0
     
     func generateNewGame() {
         self._selected = nil
@@ -80,8 +84,12 @@ struct ContentView: View {
         
         self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
         
+        self._time = 0
+        self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
+        
         self._algorithmTask = Task {
             let result = await algorithm()
+            self._timer!.invalidate()
             
             if result === nil {
                 return
@@ -90,13 +98,13 @@ struct ContentView: View {
             let bestStatePath = result!.rewind()
             
             if bestStatePath.count < 1 {
-                self.writeLog(logs: "No best states found", lineReturn: true)
+                self.writeLog(logs: "No best states found in \(String(format: "%.2f", self._time)) seconds", lineReturn: true)
                 self._performingAlgorithm = false
                 return
             }
             
-            self.writeLog(logs: "Algorithm performed found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
-            
+            self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
+
             await wait(seconds: 1)
             
             await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.5)
@@ -110,7 +118,16 @@ struct ContentView: View {
     func interruptCurrentTask() {
         self._algorithmTask?.cancel()
         self._performingAlgorithm = false
-        self.writeLog(logs: "Task canceled")
+        self.writeLog(logs: "Task canceled after \(String(format: "%.2f", self._time)) seconds")
+        
+        if !self._tempBestState.isEquals(to: self._bestState) {
+            self.writeLog(logs: "Showing the best state found during the execution...", lineReturn: true)
+        } else {
+            self.writeLog(logs: "No better state found during the execution", lineReturn: true)
+        }
+        
+        self._bestState.copy(from: self._tempBestState)
+        self._timer?.invalidate()
     }
     
     func changeRows(_ nb: Int) {
@@ -217,11 +234,18 @@ struct ContentView: View {
                                 TextField("Max closed", text: Binding(
                                     get: { String(self._maxClosed) },
                                     set: { self._maxClosed = Int($0) ?? 10000 }
-                                )).frame(width: 50)
+                                )).frame(width: 200)
                                 
                                 Button("Perform Branch and bound") {
                                     self.perform(name: "branch and bound") {
-                                        return await self._bestState.branchAndBound(maxClosed: self._maxClosed)
+                                        var i = 0
+                                        
+                                        return await self._bestState.branchAndBound(maxClosed: self._maxClosed) { betterState in
+                                            i += 1
+                                            let t = self._time
+                                            self.writeLog(logs: "\(i)) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score)", lineReturn: true)
+                                            self._tempBestState.copy(from: betterState)
+                                        }
                                     }
                                     
                                     withAnimation {
@@ -231,7 +255,14 @@ struct ContentView: View {
                                 
                                 Button("Perform A*") {
                                     self.perform(name: "A*") {
-                                        return await self._bestState.astar(maxClosed: self._maxClosed)
+                                        var i = 0
+                                        
+                                        return await self._bestState.astar(maxClosed: self._maxClosed) { betterState in
+                                            i += 1
+                                            let t = self._time
+                                            self.writeLog(logs: "\(i)) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score)", lineReturn: true)
+                                            self._tempBestState.copy(from: betterState)
+                                        }
                                     }
                                     
                                     withAnimation {
@@ -257,7 +288,11 @@ struct ContentView: View {
                     }
                     
                     VStack(spacing: 20) {
-                        Text("Algorithm tracing").font(.system(size: 20)).bold().id("algorithm")
+                        HStack {
+                            Text("Algorithm tracing").font(.system(size: 20)).bold().id("algorithm")
+                            Text(String(format: "%.2f", self._time)).font(.system(size: 20).monospaced()).bold()
+                            Text("seconds").font(.system(size: 20)).bold()
+                        }
                         
                         StateUI(
                             state: self._bestState,

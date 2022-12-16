@@ -495,7 +495,7 @@ class GameState: Matrix<Card?> {
     /**
      Branch and bound
      */
-    func branchAndBound(maxClosed: Int = Int.max) async -> GameState? {
+    func branchAndBound(maxClosed: Int = Int.max, onBetterStateFound: ((GameState) -> Void)? = nil) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
 
@@ -509,6 +509,7 @@ class GameState: Matrix<Card?> {
                 return state
             } else if state.score < bestState.score {
                 bestState = state
+                onBetterStateFound?(bestState)
             }
 
             state.computeMoves()
@@ -525,18 +526,19 @@ class GameState: Matrix<Card?> {
                 }
                 
                 if visited.count >= maxClosed {
+                    onBetterStateFound?(bestState)
                     return bestState
                 }
             }
         }
-
+        
         return bestState
     }
     
     /**
      A star algorithm
      */
-    func astar(maxClosed: Int = Int.max) async -> GameState? {
+    func astar(maxClosed: Int = Int.max, onBetterStateFound: ((GameState) -> Void)? = nil) async -> GameState? {
         var open: [GameState] = []
         var closed: [GameState] = []
         
@@ -551,6 +553,8 @@ class GameState: Matrix<Card?> {
             closed.append(state)
 
             if state.isSolved {
+                bestState = state
+                onBetterStateFound?(bestState)
                 return state
             }
 
@@ -564,6 +568,7 @@ class GameState: Matrix<Card?> {
                     return newState
                 } else if newState.score < bestState.score {
                     bestState = newState
+                    onBetterStateFound?(bestState)
                 }
                 
                 if !closed.contains(where: { $0.isEquals(to: newState) }) {
@@ -571,13 +576,14 @@ class GameState: Matrix<Card?> {
                 }
                 
                 if closed.count >= maxClosed {
+                    onBetterStateFound?(bestState)
                     return bestState
                 }
             }
             
             i += 1
         }
-
+        
         return bestState
     }
 }
