@@ -183,6 +183,19 @@ struct ContentView: View {
         }
     }
     
+    func onbetterStateFound(betterState: GameState, count: Int) -> Void {
+        let t = self._time
+        let percentage = Double(count) / Double(self._maxClosed) * 100
+        self.writeLog(logs: "\(String(format: "%.3f", percentage))%) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score) (\(count) node closed)", lineReturn: true)
+        self._tempBestState.copy(from: betterState)
+    }
+    
+    func onClosedAdded(count: Int) -> Void {
+        let percentage = Double(count) / Double(self._maxClosed) * 100
+        if percentage.truncatingRemainder(dividingBy: 2) != 0 { return }
+        self.writeLog(logs: "\(String(format: "%.3f", percentage))% completed (\(count) max closed nodes out of \(self._maxClosed) processed)", lineReturn: true)
+    }
+    
     var body: some View {
         ScrollView {
             ScrollViewReader { scroll in
@@ -238,14 +251,11 @@ struct ContentView: View {
                                 
                                 Button("Perform Branch and bound") {
                                     self.perform(name: "branch and bound") {
-                                        var i = 0
-                                        
-                                        return await self._bestState.branchAndBound(maxClosed: self._maxClosed) { betterState in
-                                            i += 1
-                                            let t = self._time
-                                            self.writeLog(logs: "\(i)) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score)", lineReturn: true)
-                                            self._tempBestState.copy(from: betterState)
-                                        }
+                                        return await self._bestState.branchAndBound(
+                                            maxClosed: self._maxClosed,
+                                            onBetterStateFound: self.onbetterStateFound,
+                                            onClosedAdded: self.onClosedAdded
+                                        )
                                     }
                                     
                                     withAnimation {
@@ -255,14 +265,11 @@ struct ContentView: View {
                                 
                                 Button("Perform A*") {
                                     self.perform(name: "A*") {
-                                        var i = 0
-                                        
-                                        return await self._bestState.astar(maxClosed: self._maxClosed) { betterState in
-                                            i += 1
-                                            let t = self._time
-                                            self.writeLog(logs: "\(i)) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score)", lineReturn: true)
-                                            self._tempBestState.copy(from: betterState)
-                                        }
+                                        return await self._bestState.astar(
+                                            maxClosed: self._maxClosed,
+                                            onBetterStateFound: self.onbetterStateFound,
+                                            onClosedAdded: self.onClosedAdded
+                                        )
                                     }
                                     
                                     withAnimation {

@@ -495,21 +495,25 @@ class GameState: Matrix<Card?> {
     /**
      Branch and bound
      */
-    func branchAndBound(maxClosed: Int = Int.max, onBetterStateFound: ((GameState) -> Void)? = nil) async -> GameState? {
-        var queue: [GameState] = []
-        var visited: [GameState] = []
+    func branchAndBound(
+        maxClosed: Int = Int.max,
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+        onClosedAdded: ((Int) -> Void)? = nil
+    ) async -> GameState? {
+        var open: [GameState] = []
+        var closed: [GameState] = []
 
-        queue.append(self)
+        open.append(self)
         var bestState: GameState = self.copy()
 
-        while queue.count > 0 {
-            let state = queue.removeFirst()
+        while open.count > 0 {
+            let state = open.removeFirst()
 
             if state.isSolved {
                 return state
             } else if state.score < bestState.score {
                 bestState = state
-                onBetterStateFound?(bestState)
+                onBetterStateFound?(bestState, closed.count)
             }
 
             state.computeMoves()
@@ -518,15 +522,16 @@ class GameState: Matrix<Card?> {
                 let newState = move.state
                 newState.computeMoves()
 
-                if !visited.contains(where: { state in
+                if !closed.contains(where: { state in
                     state.isEquals(to: newState)
                 }) {
-                    queue.append(newState)
-                    visited.append(newState)
+                    open.append(newState)
+                    closed.append(newState)
+                    onClosedAdded?(closed.count)
                 }
                 
-                if visited.count >= maxClosed {
-                    onBetterStateFound?(bestState)
+                if closed.count >= maxClosed {
+                    onBetterStateFound?(bestState, closed.count)
                     return bestState
                 }
             }
@@ -538,7 +543,11 @@ class GameState: Matrix<Card?> {
     /**
      A star algorithm
      */
-    func astar(maxClosed: Int = Int.max, onBetterStateFound: ((GameState) -> Void)? = nil) async -> GameState? {
+    func astar(
+        maxClosed: Int = Int.max,
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+        onClosedAdded: ((Int) -> Void)? = nil
+    ) async -> GameState? {
         var open: [GameState] = []
         var closed: [GameState] = []
         
@@ -551,10 +560,11 @@ class GameState: Matrix<Card?> {
         while open.count > 0 {
             let state = open.removeFirst()
             closed.append(state)
+            onClosedAdded?(closed.count)
 
             if state.isSolved {
                 bestState = state
-                onBetterStateFound?(bestState)
+                onBetterStateFound?(bestState, closed.count)
                 return state
             }
 
@@ -568,7 +578,7 @@ class GameState: Matrix<Card?> {
                     return newState
                 } else if newState.score < bestState.score {
                     bestState = newState
-                    onBetterStateFound?(bestState)
+                    onBetterStateFound?(bestState, closed.count)
                 }
                 
                 if !closed.contains(where: { $0.isEquals(to: newState) }) {
@@ -576,7 +586,7 @@ class GameState: Matrix<Card?> {
                 }
                 
                 if closed.count >= maxClosed {
-                    onBetterStateFound?(bestState)
+                    onBetterStateFound?(bestState, closed.count)
                     return bestState
                 }
             }
