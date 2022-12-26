@@ -8,8 +8,8 @@
 import Foundation
 
 enum CardSuit: Int, CaseIterable {
-    case CLUB    = 0    // ♣
-    case DIAMOND = 13   // ♦
-    case HEART   = 26   // ♥
-    case SPADE   = 39   // ♠
+    case CLUB    = 0   // ♣
+    case DIAMOND = 1   // ♦
+    case HEART   = 2   // ♥
+    case SPADE   = 3   // ♠
 }

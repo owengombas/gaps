@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState()
+    @StateObject private var _state: GameState = GameState(columns: 8, rows: 2)
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
@@ -21,12 +21,13 @@ struct ContentView: View {
     @State private var _algorithmTask: Task<Void, Error>? = nil
     @State private var _timer: Timer? = nil
     @State private var _time: Double = 0
+    @State var _seed: String = ""
     
     func generateNewGame() {
         self._selected = nil
         self._state.refresh()
         self._state.shuffle()
-        self._state.remove(.KING)
+        self.removeLasts()
         self._state.computeMoves()
         self._bestState.copy(from: self._state)
     }
@@ -45,16 +46,9 @@ struct ContentView: View {
         self._bestState.copy(from: self._state)
     }
     
-    func removeRandomly() {
+    func removeLasts() {
         self._selected = nil
-        self._state.removeCardsRandomly(numberOfCards: self._gaps)
-        self._state.computeMoves()
-        self._bestState.copy(from: self._state)
-    }
-    
-    func removeKings() {
-        self._selected = nil
-        self._state.remove(.KING)
+        self._state.remove(CardRank(rawValue: self._state.columns - 1)!)
         self._state.computeMoves()
         self._bestState.copy(from: self._state)
     }
@@ -77,7 +71,7 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping () async -> GameState?) {
+    func perform(name: String = "", algorithm: @escaping () -> GameState?) {
         self.writeLog()
         self._performingAlgorithm = true
         self._bestState.copy(from: self._state)
@@ -88,10 +82,11 @@ struct ContentView: View {
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
         
         self._algorithmTask = Task {
-            let result = await algorithm()
+            let result = algorithm()
             self._timer?.invalidate()
             
             if result === nil {
+                self.writeLog(logs: "No solution found \(String(format: "%.2f", self._time)) seconds", lineReturn: true)
                 return
             }
             
@@ -110,9 +105,9 @@ struct ContentView: View {
             await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.5)
             
             self.writeLog(logs: "Rewinding performed, here is the best state found...", lineReturn: true)
-            
-            self._performingAlgorithm = false
         }
+        
+        self._performingAlgorithm = false
     }
     
     func interruptCurrentTask() {
@@ -135,7 +130,10 @@ struct ContentView: View {
             return
         }
         
+        
         self._state.rows += nb
+        self._gaps = self._state.rows
+        self.reset()
         self._bestState.copy(from: self._state)
     }
     
@@ -145,6 +143,7 @@ struct ContentView: View {
         }
         
         self._state.columns += nb
+        self.reset()
         self._bestState.copy(from: self._state)
     }
     
@@ -196,6 +195,11 @@ struct ContentView: View {
         self.writeLog(logs: "\(String(format: "%.0f", percentage))% completed (\(count) max closed nodes out of \(self._maxClosed) processed)", lineReturn: true)
     }
     
+    func onLoadSeed() {
+        self._state.loadSeed(seed: self._seed)
+        self._bestState.copy(from: self._state)
+    }
+    
     var body: some View {
         ScrollView {
             ScrollViewReader { scroll in
@@ -213,6 +217,11 @@ struct ContentView: View {
                             ).disabled(self._performingAlgorithm)
                         }
                         
+                        HStack {
+                            TextEditor(text: self.$_seed).frame(width: 500)
+                            Button("Load seed", action: self.onLoadSeed)
+                        }
+                        
                         VStack(spacing: 10) {
                             HStack {
                                 Stepper("\(self._state.rows) rows", onIncrement: {
@@ -226,59 +235,80 @@ struct ContentView: View {
                                 }, onDecrement: {
                                     self.changeColumns(-1)
                                 })
-                                
-                                Stepper("\(self._gaps) gaps", onIncrement: {
-                                    self.changeGaps(1)
-                                }, onDecrement: {
-                                    self.changeGaps(-1)
-                                })
                             }.disabled(self._performingAlgorithm)
                             
                             HStack {
                                 Button("Generate new game", action: self.generateNewGame)
+                                Button("Remove lasts", action: self.removeLasts)
                                 Button("Shuffle", action: self.shuffle)
                                 Button("Reset", action: self.reset)
-                                Button("Remove randomly", action: self.removeRandomly)
-                                Button("Remove Kings", action: self.removeKings)
                                 Toggle("Apply move verification", isOn: self.$_peformMovesSafely)
                             }.disabled(self._performingAlgorithm)
                             
-                            HStack {
-                                TextField("Max closed", text: Binding(
-                                    get: { String(self._maxClosed) },
-                                    set: { self._maxClosed = Int($0) ?? 10000 }
-                                )).frame(width: 200)
-                                
-                                Button("Perform Branch and bound") {
-                                    self.perform(name: "branch and bound") {
-                                        return await self._bestState.branchAndBound(
-                                            maxClosed: self._maxClosed,
-                                            onBetterStateFound: self.onbetterStateFound,
-                                            onClosedAdded: self.onClosedAdded
-                                        )
+                            Spacer(minLength: 10)
+                            
+                            VStack {
+                                HStack {
+                                    Button("Perform dfs") {
+                                        self.perform(name: "dfs") {
+                                            return self._bestState.depthFirstSearch()
+                                        }
+                                        
+                                        withAnimation {
+                                            scroll.scrollTo("algorithm", anchor: .top)
+                                        }
                                     }
                                     
-                                    withAnimation {
-                                        scroll.scrollTo("algorithm", anchor: .top)
+                                    Button("Perform bfs") {
+                                        self.perform(name: "bfs") {
+                                            return self._bestState.breadthFirstSearch()
+                                        }
+                                        
+                                        withAnimation {
+                                            scroll.scrollTo("algorithm", anchor: .top)
+                                        }
                                     }
                                 }
                                 
-                                Button("Perform A*") {
-                                    self.perform(name: "A*") {
-                                        return await self._bestState.astar(
-                                            maxClosed: self._maxClosed,
-                                            onBetterStateFound: self.onbetterStateFound,
-                                            onClosedAdded: self.onClosedAdded
-                                        )
+                                HStack {
+                                    TextField("Max closed", text: Binding(
+                                        get: { String(self._maxClosed) },
+                                        set: { self._maxClosed = Int($0) ?? 10000 }
+                                    )).frame(width: 200)
+                                    
+                                    Button("Perform Branch and bound") {
+                                        self.perform(name: "branch and bound") {
+                                            return self._bestState.branchAndBound(
+                                                maxClosed: self._maxClosed,
+                                                onBetterStateFound: self.onbetterStateFound,
+                                                onClosedAdded: self.onClosedAdded
+                                            )
+                                        }
+                                        
+                                        withAnimation {
+                                            scroll.scrollTo("algorithm", anchor: .top)
+                                        }
                                     }
                                     
-                                    withAnimation {
-                                        scroll.scrollTo("algorithm", anchor: .top)
+                                    Button("Perform A*") {
+                                        self.perform(name: "A*") {
+                                            return self._bestState.astar(
+                                                maxClosed: self._maxClosed,
+                                                onBetterStateFound: self.onbetterStateFound,
+                                                onClosedAdded: self.onClosedAdded
+                                            )
+                                        }
+                                        
+                                        withAnimation {
+                                            scroll.scrollTo("algorithm", anchor: .top)
+                                        }
                                     }
-                                }
-                            }.disabled(self._performingAlgorithm)
+                                }.disabled(self._performingAlgorithm)
+                            }
                             
                             if self._performingAlgorithm == false {
+                                Spacer(minLength: 10)
+                                
                                 VStack {
                                     Text("\(self._state.moves.count) Children states found").bold()
                                     
@@ -331,6 +361,8 @@ struct ContentView: View {
                     }
                 }.padding(20)
             }
+        }.onAppear {
+            self._bestState.copy(from: self._state)
         }
     }
 }

@@ -61,6 +61,8 @@ struct StateUI: View {
                 if self.state.isSolved {
                     Text("Solved").font(.system(size: 10)).bold()
                 }
+                
+                Text("\(self.state.seed)").font(.system(size: 10)).textSelection(.enabled)
             }
             
             Group {

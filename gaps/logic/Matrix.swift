@@ -8,7 +8,7 @@
 import Foundation
 
 class Matrix<T>: CustomStringConvertible, ObservableObject {
-    @Published private var _repr: [[T]]
+    @Published var values: [[T]]
     private var _columns: Int
     private var _rows: Int
     private var _defaultValue: (Int, Int, Int, Matrix<T>) -> T
@@ -49,7 +49,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     init(columns: Int, rows: Int, defaultValue: @escaping (Int, Int, Int, Matrix<T>) -> T) {
-        self._repr = []
+        self.values = []
         self._columns = columns
         self._rows = rows
         self._defaultValue = defaultValue
@@ -60,11 +60,11 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func refresh() {
         var c = 0
         for j in 0..<self.rows {
-            self._repr.append([])
+            self.values.append([])
             
             for i in 0..<self.columns {
                 let v = self._defaultValue(i, j, c, self)
-                self._repr[j].append(v)
+                self.values[j].append(v)
                 
                 c += 1
             }
@@ -72,7 +72,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     func reset() {
-        self._repr.removeAll(keepingCapacity: true)
+        self.values.removeAll(keepingCapacity: true)
         self.refresh()
     }
     
@@ -101,7 +101,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     func getElement(column: Int, row: Int) -> T {
-        return self._repr[row][column]
+        return self.values[row][column]
     }
     
     func getElement(position: (Int, Int)) -> T {
@@ -114,7 +114,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     }
     
     func setElement(i: Int, j: Int, value: T) {
-        self._repr[j][i] = value
+        self.values[j][i] = value
     }
     
     func setElement(position: (Int, Int), value: T) {

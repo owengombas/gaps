@@ -13,7 +13,7 @@ class Card: CustomStringConvertible {
     
     var description: String {
         get {
-            return "(\(self._rank), \(self._suit), \(self.number))"
+            return "(\(self._rank), \(self._suit))"
         }
     }
     
@@ -39,10 +39,8 @@ class Card: CustomStringConvertible {
     /**
      The number that represents the card in the deck from 0 to 51 (4 \* 13 - 1)
      */
-    var number: Int {
-        get {
-            return self._suit.rawValue + self._rank.rawValue
-        }
+    func toNumber(columns: Int = 13) -> Int {
+        return self._suit.rawValue * columns + self._rank.rawValue
     }
     
     /**
@@ -66,28 +64,24 @@ class Card: CustomStringConvertible {
     
     /**
      Each card has an attributed number from 0 to 51
-     ♣  [0, 12] - CLUB
+     ♣ [0, 12] - CLUB
      ♦ [13, 25] - DIAMOND
      ♥ [26, 38] - HEART
      ♠ [39, 51] - SPADE
      */
-    public static func fromNumber(number: Int, columns: Int = 13) -> Card {
+    public static func fromNumber(number: Int, columns: Int = 13, rows: Int = 4) -> Card {
         assert(number >= 0, "The number should be greater than 0")
         assert(number <= 51, "The number should be smaller than 51")
-        
-        var suit: CardSuit? = nil
-        
-        for color in CardSuit.allCases {
-            if (color.rawValue...color.rawValue + 12).contains(number) {
-                suit = color
-                break
-            }
-        }
-        
-        let n = Int(number % columns)
-        let rank: CardRank? = CardRank(rawValue: n)
-        
-        return Card(suit: suit!, rank: rank!)
+
+        let suit: CardSuit = CardSuit.init(rawValue: number / columns)!
+        let rank: CardRank = CardRank.init(rawValue: number % columns)!
+
+        return Card(suit: suit, rank: rank)
+    }
+
+    public static func fromPosition(position: (Int, Int), columns: Int = 13, rows: Int = 4) -> Card {
+        let number = position.0 + position.1 * columns
+        return Card.fromNumber(number: number, columns: columns, rows: rows)
     }
     
     /**
