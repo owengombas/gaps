@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState(columns: 8, rows: 2)
+    @StateObject private var _state: GameState = GameState(columns: 13, rows: 4)
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
@@ -71,7 +71,11 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping () -> GameState?) {
+    func perform(name: String = "", algorithm: @escaping () async -> GameState?, scroll: ScrollViewProxy) {
+        withAnimation {
+            scroll.scrollTo("algorithm", anchor: .top)
+        }
+        
         self.writeLog()
         self._performingAlgorithm = true
         self._bestState.copy(from: self._state)
@@ -82,10 +86,11 @@ struct ContentView: View {
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
         
         self._algorithmTask = Task {
-            let result = algorithm()
+            let result = await algorithm()
             self._timer?.invalidate()
             
             if result === nil {
+                self._performingAlgorithm = false
                 self.writeLog(logs: "No solution found \(String(format: "%.2f", self._time)) seconds", lineReturn: true)
                 return
             }
@@ -102,12 +107,12 @@ struct ContentView: View {
 
             await wait(seconds: 1)
             
-            await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.5)
+            await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.25)
             
             self.writeLog(logs: "Rewinding performed, here is the best state found...", lineReturn: true)
+            
+            self._performingAlgorithm = false
         }
-        
-        self._performingAlgorithm = false
     }
     
     func interruptCurrentTask() {
@@ -250,58 +255,22 @@ struct ContentView: View {
                             VStack {
                                 HStack {
                                     Button("Perform dfs") {
-                                        self.perform(name: "dfs") {
-                                            return self._bestState.depthFirstSearch()
-                                        }
-                                        
-                                        withAnimation {
-                                            scroll.scrollTo("algorithm", anchor: .top)
-                                        }
+                                        self.perform(name: "dfs", algorithm: self._bestState.depthFirstSearch, scroll: scroll)
                                     }
                                     
                                     Button("Perform bfs") {
-                                        self.perform(name: "bfs") {
-                                            return self._bestState.breadthFirstSearch()
-                                        }
-                                        
-                                        withAnimation {
-                                            scroll.scrollTo("algorithm", anchor: .top)
-                                        }
+                                        self.perform(name: "bfs", algorithm: self._bestState.breadthFirstSearch, scroll: scroll)
                                     }
                                 }
                                 
                                 HStack {
-                                    TextField("Max closed", text: Binding(
-                                        get: { String(self._maxClosed) },
-                                        set: { self._maxClosed = Int($0) ?? 10000 }
-                                    )).frame(width: 200)
-                                    
-                                    Button("Perform Branch and bound") {
-                                        self.perform(name: "branch and bound") {
-                                            return self._bestState.branchAndBound(
-                                                maxClosed: self._maxClosed,
-                                                onBetterStateFound: self.onbetterStateFound,
-                                                onClosedAdded: self.onClosedAdded
-                                            )
-                                        }
-                                        
-                                        withAnimation {
-                                            scroll.scrollTo("algorithm", anchor: .top)
-                                        }
-                                    }
+//                                    TextField("Max closed", text: Binding(
+//                                        get: { String(self._maxClosed) },
+//                                        set: { self._maxClosed = Int($0) ?? 10000 }
+//                                    )).frame(width: 200)
                                     
                                     Button("Perform A*") {
-                                        self.perform(name: "A*") {
-                                            return self._bestState.astar(
-                                                maxClosed: self._maxClosed,
-                                                onBetterStateFound: self.onbetterStateFound,
-                                                onClosedAdded: self.onClosedAdded
-                                            )
-                                        }
-                                        
-                                        withAnimation {
-                                            scroll.scrollTo("algorithm", anchor: .top)
-                                        }
+                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch, scroll: scroll)
                                     }
                                 }.disabled(self._performingAlgorithm)
                             }

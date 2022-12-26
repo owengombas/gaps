@@ -296,14 +296,18 @@ class GameState: Matrix<Card?> {
     Find all moves based on the game rules
      */
     func computeMoves() {
-        self._moves = []
+        DispatchQueue.main.async {
+            self._moves = []
+        }
 
         for gap in gaps {
             // If the gap is at the begining of a row, then all aces can fill it
             if gap.0 <= 0 {
-                self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
-                    card?.rank == .ACE
-                })
+                DispatchQueue.main.async {
+                    self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
+                        card?.rank == .ACE
+                    })
+                }
                 continue
             }
             
@@ -343,8 +347,10 @@ class GameState: Matrix<Card?> {
                     state: childrenState,
                     parentState: self
             )
-
-            self._moves.append(m)
+            
+            DispatchQueue.main.async {
+                self._moves.append(m)
+            }
         }
     }
 
@@ -562,7 +568,7 @@ class GameState: Matrix<Card?> {
      */
     func generalizedSearch(
             insert: (inout [GameState], GameState) -> Void
-    ) -> GameState? {
+    ) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
 
@@ -575,10 +581,14 @@ class GameState: Matrix<Card?> {
             if state.isSolved {
                 return state
             }
+            
+            if Task.isCancelled { return nil }
 
             state.computeMoves()
 
             for move in state._moves {
+                if Task.isCancelled { return nil }
+                
                 let newState = move.state
 
                 if !visited.contains(where: { state in
@@ -595,8 +605,8 @@ class GameState: Matrix<Card?> {
     /**
      Depth first search
      */
-    func depthFirstSearch() -> GameState? {
-        return self.generalizedSearch(insert: { queue, state in
+    func depthFirstSearch() async -> GameState? {
+        return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
         })
     }
@@ -604,110 +614,52 @@ class GameState: Matrix<Card?> {
     /**
      Breadth first search
      */
-    func breadthFirstSearch() -> GameState? {
-        return self.generalizedSearch(insert: { queue, state in
+    func breadthFirstSearch() async -> GameState? {
+        return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
         })
     }
 
     /**
-     Branch and bound
+     A* search
      */
-    func branchAndBound(
-            maxClosed: Int = Int.max,
-            onBetterStateFound: ((GameState, Int) -> Void)? = nil,
-            onClosedAdded: ((Int) -> Void)? = nil
-    ) -> GameState? {
-        var open: [GameState] = []
-        var closed: [GameState] = []
+    func aStarSearch() async -> GameState? {
+        var queue: [GameState] = []
+        var visited: [GameState] = []
 
-        open.append(self)
-        var bestState: GameState = self.copy()
+        queue.append(self)
 
-        while open.count > 0 {
-            if Task.isCancelled { break }
-
-            let state = open.removeFirst()
+        while queue.count > 0 {
+            let state = queue.removeFirst()
+            visited.append(state)
 
             if state.isSolved {
                 return state
-            } else if state.score < bestState.score {
-                bestState = state
-                onBetterStateFound?(bestState, closed.count)
             }
+            
+            if Task.isCancelled { return nil }
 
             state.computeMoves()
 
             for move in state._moves {
-                if Task.isCancelled { break }
-
+                if Task.isCancelled { return nil }
+                
                 let newState = move.state
-                newState.computeMoves()
 
-                if !closed.contains(where: { state in
-                    state.isEquals(to: newState)
-                }) {
-                    open.append(newState)
-                    closed.append(newState)
-                    onClosedAdded?(closed.count)
-                }
-
-                if closed.count >= maxClosed {
-                    onBetterStateFound?(bestState, closed.count)
-                    return bestState
-                }
-            }
-        }
-
-        return bestState
-    }
-
-    /**
-     A star algorithm
-     */
-    func astar(
-            maxClosed: Int = Int.max,
-            onBetterStateFound: ((GameState, Int) -> Void)? = nil,
-            onClosedAdded: ((Int) -> Void)? = nil
-    ) -> GameState? {
-        var open: [GameState] = [self]
-        var closed: [GameState] = []
-
-        var bestState: GameState? = self.copy()
-        var bestScore: Int = Int.max
-
-        while open.count > 0 {
-            let state = open.removeFirst()
-            state.computeMoves()
-
-            if state.score < bestScore {
-                bestState = state
-                bestScore = state.score
-                onBetterStateFound?(state, closed.count)
-            }
-
-            if state.isSolved {
-                return state
-            }
-
-            for move in state.moves {
-                let newState = move.state
-                newState.computeMoves()
-
-                if !closed.contains(where: { state in
+                if !visited.contains(where: { state in
                     return state.isEquals(to: newState)
                 }) {
-                    open.append(newState)
-                    closed.append(state)
-                    onClosedAdded?(closed.count)
-                }
-
-                if closed.count >= maxClosed {
-                    return bestState
+                    queue.append(newState)
                 }
             }
+            
+            if Task.isCancelled { return nil }
+
+            queue.sort(by: { stateA, stateB in
+                return stateA.score < stateB.score
+            })
         }
 
-        return bestState
+        return nil
     }
 }
