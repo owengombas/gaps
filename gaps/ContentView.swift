@@ -96,13 +96,11 @@ struct ContentView: View {
                 return
             }
             
-            let bestStatePath = result!.rewind()
-            
-            if bestStatePath.count < 1 {
-                self.writeLog(logs: "No best states found in \(String(format: "%.2f", self._time)) seconds", lineReturn: true)
-                self._performingAlgorithm = false
-                return
+            if result!.score > 0 {
+                self.writeLog(logs: "Found a partial solution in \(String(format: "%.2f", self._time)) seconds, the game couldn't be fully solved, showing the best solution found...", lineReturn: true)
             }
+            
+            let bestStatePath = result!.rewind()
             
             self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
             self._performingAlgorithm = false
@@ -132,6 +130,7 @@ struct ContentView: View {
             self.writeLog(logs: "No better state found during the execution", lineReturn: true)
         }
         
+        self._tempBestState.copy(from: self._state)
         self._bestState.copy(from: self._tempBestState)
         self._timer?.invalidate()
     }
@@ -209,6 +208,7 @@ struct ContentView: View {
     func onLoadSeed() {
         self._state.loadSeed(seed: self._seed)
         self._bestState.copy(from: self._state)
+        self._state.computeMoves()
     }
     
     var body: some View {

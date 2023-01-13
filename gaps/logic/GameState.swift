@@ -572,10 +572,15 @@ class GameState: Matrix<Card?> {
         var visited: [GameState] = []
 
         queue.append(self)
+        var bestState: GameState = self
 
         while queue.count > 0 {
             let state = queue.removeFirst()
             visited.append(state)
+
+            if state.score < bestState.score {
+                bestState = state
+            }
 
             if state.isSolved {
                 return state
@@ -598,7 +603,7 @@ class GameState: Matrix<Card?> {
             }
         }
 
-        return nil
+        return bestState
     }
 
     /**
@@ -627,10 +632,15 @@ class GameState: Matrix<Card?> {
         var visited: [GameState] = []
 
         queue.append(self)
+        var bestState: GameState = self
 
         while queue.count > 0 {
             let state = queue.removeFirst()
             visited.append(state)
+
+            if state.score < bestState.score {
+                bestState = state
+            }
 
             if state.isSolved {
                 return state
@@ -659,6 +669,6 @@ class GameState: Matrix<Card?> {
             })
         }
 
-        return nil
+        return bestState
     }
 }
