@@ -541,7 +541,9 @@ class GameState: Matrix<Card?> {
      Is the GameState equals to an another one
      */
     func isEquals(to: GameState?) -> Bool {
-        assert(self.capacity == to?.capacity, "The two states must be the same size")
+        if self.capacity != to?.capacity {
+            return false
+        }
         
         if to === nil {
             return false

@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var _gaps: Int = 4
     @State private var _selected: Card? = nil
     @State private var _performingAlgorithm: Bool = false
+    @State private var _performingAnimation: Bool = false
     @State private var _maxClosed: Int = 100000
     @State private var _logs: String = ""
     @State private var _algorithmTask: Task<Void, Error>? = nil
@@ -104,18 +105,23 @@ struct ContentView: View {
             }
             
             self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
-
+            self._performingAlgorithm = false
+            
             await wait(seconds: 1)
             
+            self._performingAnimation = true
             await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.25)
+            self._performingAnimation = false
             
             self.writeLog(logs: "Rewinding performed, here is the best state found...", lineReturn: true)
-            
-            self._performingAlgorithm = false
         }
     }
     
     func interruptCurrentTask() {
+        if !self._performingAlgorithm {
+            return
+        }
+        
         self._algorithmTask?.cancel()
         self._performingAlgorithm = false
         self.writeLog(logs: "Task canceled after \(String(format: "%.2f", self._time)) seconds")
@@ -254,20 +260,13 @@ struct ContentView: View {
                             
                             VStack {
                                 HStack {
-                                    Button("Perform dfs") {
+                                    Button("Perform DFS") {
                                         self.perform(name: "dfs", algorithm: self._bestState.depthFirstSearch, scroll: scroll)
                                     }
                                     
-                                    Button("Perform bfs") {
+                                    Button("Perform BFS") {
                                         self.perform(name: "bfs", algorithm: self._bestState.breadthFirstSearch, scroll: scroll)
                                     }
-                                }
-                                
-                                HStack {
-//                                    TextField("Max closed", text: Binding(
-//                                        get: { String(self._maxClosed) },
-//                                        set: { self._maxClosed = Int($0) ?? 10000 }
-//                                    )).frame(width: 200)
                                     
                                     Button("Perform A*") {
                                         self.perform(name: "A*", algorithm: self._bestState.aStarSearch, scroll: scroll)
