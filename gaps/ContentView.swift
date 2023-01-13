@@ -383,10 +383,11 @@ struct ContentView: View {
                         TextEditor(text: .constant(self._logs)).disabled(true)
                     }
                     
-                    VStack {
-                        if #available(macOS 13.0, *) {
-                            VStack {
+                    if #available(macOS 13.0, *) {
+                        VStack {
+                            VStack(spacing: 40) {
                                 Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold().id("title")
+                                
                                 Chart {
                                     ForEach(self._closedNodesOverTime) { shape in
                                         LineMark(
@@ -400,9 +401,11 @@ struct ContentView: View {
                                 .chartXAxisLabel("Closed nodes")
                                 .chartYAxisLabel("Time (s)")
                                 .frame(minHeight: 600)
+                                
+                                Button("Clear measurements") {
+                                    self._closedNodesOverTime = []
+                                }
                             }
-                        } else {
-                            // Fallback on earlier versions
                         }
                     }
                 }.padding(20).onAppear {
