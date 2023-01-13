@@ -422,15 +422,16 @@ class GameState: Matrix<Card?> {
     /**
      Apply a move and change the current state
      */
-    func performMove(move: Move, verify: Bool = false) {
+    func performMove(move: Move, verify: Bool = false) -> GameState {
         if verify == true {
             if !self.verifyMove(move: move) {
-                return
+                return self
             }
         }
 
         self.swap(posA: move.from, posB: move.to)
         self.computeMoves()
+        return self
     }
 
     /**

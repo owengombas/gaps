@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var _time: Double = 0
     @State var _seed: String = ""
     @State var _scroll: ScrollViewProxy? = nil
+    @State var _viewChildren: Bool = false
     
     func generateNewGame() {
         self._selected = nil
@@ -254,6 +255,7 @@ struct ContentView: View {
                                 selected: self.$_selected,
                                 peformMovesSafely: self.$_peformMovesSafely,
                                 blockMove: self.$_performingAlgorithm,
+                                cardWidth: 80,
                                 onCardChange: onCardChangeMain
                             ).disabled(self._performingAlgorithm)
                         }
@@ -307,14 +309,31 @@ struct ContentView: View {
                             if self._performingAlgorithm == false {
                                 Spacer(minLength: 10)
                                 
+                                
                                 VStack {
                                     Text("\(self._state.moves.count) Children states found").bold()
                                     
-                                    VStack {
-                                        ForEach(self._state.moves, id: \.state.description) { move in
-                                            Button(move.description, action: {
-                                                self._state.performMove(move: move)
-                                            })
+                                    if self._viewChildren {
+                                        Button("Hide children states") {
+                                            self._viewChildren = false
+                                        }
+                                        
+                                        Spacer(minLength: 10)
+                                        
+                                        VStack {
+                                            ForEach(self._state.moves, id: \.state.description) { move in
+                                                StateUI(
+                                                    state: self._state.copy().performMove(move: move),
+                                                    selected: Binding.constant(nil),
+                                                    peformMovesSafely: Binding.constant(false),
+                                                    blockMove: Binding.constant(true),
+                                                    cardWidth: 30
+                                                ).frame(maxWidth: .infinity)
+                                            }
+                                        }
+                                    } else {
+                                        Button("Show children states") {
+                                            self._viewChildren = true
                                         }
                                     }
                                 }
@@ -334,6 +353,7 @@ struct ContentView: View {
                             selected: self.$_selected,
                             peformMovesSafely: self.$_peformMovesSafely,
                             blockMove: self.$_performingAlgorithm,
+                            cardWidth: 80,
                             onCardChange: self.onCardChangeAlgorithm
                         )
                         

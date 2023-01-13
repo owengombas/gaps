@@ -12,6 +12,7 @@ struct StateUI: View {
     @Binding var selected: Card?
     @Binding var peformMovesSafely: Bool
     @Binding var blockMove: Bool
+    var cardWidth: CGFloat = 80
     
     var onCardChange: ((Card, (Int, Int)) -> Void)?
     
@@ -53,7 +54,7 @@ struct StateUI: View {
         self.selected = nil
     }
     
-    var body: some View {        
+    var body: some View {
         VStack {
             VStack(spacing: 2) {
                 Text("Score: \(self.state.score)").font(.system(size: 20)).bold()
@@ -73,7 +74,7 @@ struct StateUI: View {
                                 // A Card
                                 Image("\(card!.suit)_\(card!.rank)")
                                     .resizable()
-                                    .frame(width: 80, height: 118)
+                                    .frame(width: self.cardWidth, height: self.cardWidth * 1.5)
                                     .aspectRatio(contentMode: .fit)
                                     .onTapGesture { self.onCardTap(card: card) }
                                     .padding(3)
@@ -93,7 +94,7 @@ struct StateUI: View {
                             } else {
                                 // A GAP
                                 Spacer()
-                                    .frame(width: 80, height: 118, alignment: .center)
+                                    .frame(width: self.cardWidth, height: self.cardWidth * 1.5, alignment: .center)
                                     .background(Color(red: 0.5, green: 0.5, blue: 0.5))
                                     .cornerRadius(5)
                                     .padding(3)
@@ -112,7 +113,7 @@ struct StateUI: View {
                 }
             }
             .frame(
-                minHeight: CGFloat(self.state.rows * 130)
+                minHeight: CGFloat(CGFloat(self.state.rows) * (self.cardWidth * 1.5 * 1.1))
             )
             
             Group {
