@@ -591,7 +591,8 @@ class GameState: Matrix<Card?> {
      */
     func generalizedSearch(
             insert: (inout [GameState], inout GameState) -> Void,
-            onClosedAdded: ((Int) -> Void)? = nil
+            onClosedAdded: ((Int) -> Void)? = nil,
+            onBetterStateFound: ((GameState) -> Void)? = nil
     ) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
@@ -607,9 +608,11 @@ class GameState: Matrix<Card?> {
 
             if state.score < bestState.score {
                 bestState = state
+                onBetterStateFound?(bestState)
             }
 
             if state.isSolved {
+                onBetterStateFound?(state)
                 return state
             }
             
@@ -626,6 +629,11 @@ class GameState: Matrix<Card?> {
                     return state.isEquals(to: newState)
                 }) {
                     insert(&queue, &newState)
+                    
+                    if newState.score < bestState.score {
+                        bestState = state
+                        onBetterStateFound?(bestState)
+                    }
                 }
             }
         }
@@ -636,7 +644,10 @@ class GameState: Matrix<Card?> {
     /**
      Depth first search
      */
-    func depthFirstSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
+    func depthFirstSearch(
+        onClosedAdded: ((Int) -> Void)? = nil,
+        onBetterStateFound: ((GameState) -> Void)? = nil
+    ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
         }, onClosedAdded: onClosedAdded)
@@ -645,7 +656,10 @@ class GameState: Matrix<Card?> {
     /**
      Breadth first search
      */
-    func breadthFirstSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
+    func breadthFirstSearch(
+        onClosedAdded: ((Int) -> Void)? = nil,
+        onBetterStateFound: ((GameState) -> Void)? = nil
+    ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
         }, onClosedAdded: onClosedAdded)
@@ -654,7 +668,10 @@ class GameState: Matrix<Card?> {
     /**
      A* search
      */
-    func aStarSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
+    func aStarSearch(
+        onClosedAdded: ((Int) -> Void)? = nil,
+        onBetterStateFound: ((GameState) -> Void)? = nil
+    ) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
 
@@ -669,9 +686,11 @@ class GameState: Matrix<Card?> {
 
             if state.score < bestState.score {
                 bestState = state
+                onBetterStateFound?(bestState)
             }
 
             if state.isSolved {
+                onBetterStateFound?(state)
                 return state
             }
             
@@ -680,15 +699,20 @@ class GameState: Matrix<Card?> {
             let stateMoves = state.getMoves()
 
             for move in stateMoves {
-                if Task.isCancelled { return nil }
-                
                 let newState = move.state
 
                 if !visited.contains(where: { state in
                     return state.isEquals(to: newState)
                 }) {
                     queue.append(newState)
+                    
+                    if newState.score < bestState.score {
+                        bestState = state
+                        onBetterStateFound?(bestState)
+                    }
                 }
+                
+                if Task.isCancelled { return nil }
             }
             
             if Task.isCancelled { return nil }

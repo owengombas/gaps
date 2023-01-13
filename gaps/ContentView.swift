@@ -28,6 +28,7 @@ struct ContentView: View {
     @State var _viewChildren: Bool = false
     @State var _closedNodesOverTimePerAlgorithms: [Measure] = []
     @State var _closedNodesOverTimePerHeuristics: [Measure] = []
+    @State var _betterStateFoundOverTime: [Measure] = []
     
     func generateNewGame() {
         self._selected = nil
@@ -83,10 +84,20 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping (@escaping (Int) -> Void) async -> GameState?, heuristicName: String? = nil) {
+    func perform(
+        name: String = "",
+        algorithm: @escaping ((
+            @escaping ((Int) -> Void),
+            @escaping ((GameState) -> Void)
+        ) async -> GameState?),
+        heuristicName: String? = nil
+    ) {
         self.scroll(to: "algorithm")
         
-        self.writeLog()
+        if self._logs.count > 0 {
+            self.writeLog(logs: "\n")
+        }
+        
         self._performingAlgorithm = true
         self._bestState.copy(from: self._state)
         
@@ -98,25 +109,38 @@ struct ContentView: View {
         self._algorithmTask = Task {
             var lastT = self._time
             var closedNodesCount = 0
-            let result = await algorithm { closedCount in
-                let nodeInterval = 100
+            
+            let onClosedAdded: ((Int) -> Void) = { closedCount in
+                let nodeInterval = 25
                 if closedCount % nodeInterval == 0 {
-                    let dT = self._time - lastT
+                    var dT = self._time - lastT
+                    if dT == 0 {
+                        dT = 1
+                    }
+                    
                     self.writeLog(logs: "Visited \(closedCount)")
                     
-                    let t = self._time
-                    if t != 0 {
-                        self.writeLog(logs: "(\(Int(Double(nodeInterval) / dT)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
-                        self._closedNodesOverTimePerAlgorithms.append(Measure(count: closedCount, time: dT, name: name))
-                        
-                        if heuristicName != nil {
-                            self._closedNodesOverTimePerHeuristics.append(Measure(count: closedCount, time: dT, name: heuristicName!))
-                        }
+                    let nodesPerSeconds = Double(nodeInterval) / dT
+                    
+                    self.writeLog(logs: "(\(Int(nodesPerSeconds)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
+                    
+                    self._closedNodesOverTimePerAlgorithms.append(Measure(x: Double(closedCount), y: dT, z: name))
+                    
+                    if heuristicName != nil {
+                        self._closedNodesOverTimePerHeuristics.append(Measure(x: Double(closedCount), y: dT, z: heuristicName!))
                     }
-                    lastT = t
+                    
+                    lastT = self._time
                 }
                 closedNodesCount = closedCount
             }
+            
+            let onBetterStateFound: ((GameState) -> Void) = { state in
+                self.writeLog(logs: "Better state found with score \(state.score)")
+                self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(state.score), z: name))
+            }
+            
+            let result = await algorithm(onClosedAdded, onBetterStateFound)
             
             let nodesPerSecondes = Int(Double(closedNodesCount) / (self._time == 0 ? 1 : self._time))
             
@@ -399,9 +423,9 @@ struct ContentView: View {
                                     Chart {
                                         ForEach(self._closedNodesOverTimePerAlgorithms) { shape in
                                             LineMark(
-                                                x: .value("Closed nodes", shape.count),
-                                                y: .value("Time (s)", shape.time)
-                                            ).foregroundStyle(by: .value("Algorithm", shape.name))
+                                                x: .value("Closed nodes", shape.x),
+                                                y: .value("Time (s)", shape.y)
+                                            ).foregroundStyle(by: .value("Algorithm", shape.z))
                                         }
                                     }.chartForegroundStyleScale([
                                         "A*": .green, "DFS": .pink, "BFS": .orange
@@ -423,9 +447,9 @@ struct ContentView: View {
                                     Chart {
                                         ForEach(self._closedNodesOverTimePerHeuristics) { shape in
                                             LineMark(
-                                                x: .value("Closed nodes", shape.count),
-                                                y: .value("Time (s)", shape.time)
-                                            ).foregroundStyle(by: .value("Algorithm", shape.name))
+                                                x: .value("Closed nodes", shape.x),
+                                                y: .value("Time (s)", shape.y)
+                                            ).foregroundStyle(by: .value("Heuristic", shape.z))
                                         }
                                     }.chartForegroundStyleScale([
                                         "Misplaced cards": .cyan
@@ -436,6 +460,30 @@ struct ContentView: View {
                                     
                                     Button("Clear measurements") {
                                         self._closedNodesOverTimePerHeuristics = []
+                                    }
+                                }
+                            }
+                            
+                            if _betterStateFoundOverTime.count > 1 {
+                                VStack(spacing: 40) {
+                                    Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold()
+                                    
+                                    Chart {
+                                        ForEach(self._betterStateFoundOverTime) { shape in
+                                            LineMark(
+                                                x: .value("Time (s)", shape.x),
+                                                y: .value("State score", shape.y)
+                                            ).foregroundStyle(by: .value("Algorithm", shape.z))
+                                        }
+                                    }.chartForegroundStyleScale([
+                                        "A*": .green, "DFS": .pink, "BFS": .orange
+                                    ])
+                                    .chartXAxisLabel("Time (s)")
+                                    .chartYAxisLabel("State score")
+                                    .frame(minHeight: 600)
+                                    
+                                    Button("Clear measurements") {
+                                        self._betterStateFoundOverTime = []
                                     }
                                 }
                             }
