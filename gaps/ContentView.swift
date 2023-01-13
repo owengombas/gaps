@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Charts
 
 struct ContentView: View {
     @StateObject private var _state: GameState = GameState(columns: 13, rows: 4)
@@ -25,6 +26,7 @@ struct ContentView: View {
     @State var _seed: String = ""
     @State var _scroll: ScrollViewProxy? = nil
     @State var _viewChildren: Bool = false
+    @State var _closedNodesOverTime: [Measure] = []
     
     func generateNewGame() {
         self._selected = nil
@@ -104,6 +106,7 @@ struct ContentView: View {
                     let t = self._time
                     if t != 0 {
                         self.writeLog(logs: "(\(Int(Double(nodeInterval) / dT)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
+                        self._closedNodesOverTime.append(Measure(closedCount: closedCount, time: dT, algorithm: name))
                     }
                     lastT = t
                 }
@@ -293,11 +296,11 @@ struct ContentView: View {
                             VStack {
                                 HStack {
                                     Button("Perform DFS") {
-                                        self.perform(name: "dfs", algorithm: self._bestState.depthFirstSearch)
+                                        self.perform(name: "DFS", algorithm: self._bestState.depthFirstSearch)
                                     }
                                     
                                     Button("Perform BFS") {
-                                        self.perform(name: "bfs", algorithm: self._bestState.breadthFirstSearch)
+                                        self.perform(name: "BFS", algorithm: self._bestState.breadthFirstSearch)
                                     }
                                     
                                     Button("Perform A*") {
@@ -308,7 +311,6 @@ struct ContentView: View {
                             
                             if self._performingAlgorithm == false {
                                 Spacer(minLength: 10)
-                                
                                 
                                 VStack {
                                     Text("\(self._state.moves.count) Children states found").bold()
@@ -379,6 +381,29 @@ struct ContentView: View {
                         }
                         
                         TextEditor(text: .constant(self._logs)).disabled(true)
+                    }
+                    
+                    VStack {
+                        if #available(macOS 13.0, *) {
+                            VStack {
+                                Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold().id("title")
+                                Chart {
+                                    ForEach(self._closedNodesOverTime) { shape in
+                                        LineMark(
+                                            x: .value("Closed nodes", shape.closedCount),
+                                            y: .value("Time (s)", shape.time)
+                                        ).foregroundStyle(by: .value("Algorithm", shape.algorithm))
+                                    }
+                                }.chartForegroundStyleScale([
+                                    "A*": .green, "DFS": .purple, "BFS": .pink
+                                ])
+                                .chartXAxisLabel("Closed nodes")
+                                .chartYAxisLabel("Time (s)")
+                                .frame(minHeight: 600)
+                            }
+                        } else {
+                            // Fallback on earlier versions
+                        }
                     }
                 }.padding(20).onAppear {
                     self._scroll = scroll

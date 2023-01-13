@@ -10,6 +10,7 @@
 		5A0BBD1329009AA4008F4936 /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0BBD1229009AA4008F4936 /* Move.swift */; };
 		5A32134328FDC07900E15F89 /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A32134228FDC07900E15F89 /* Graph.swift */; };
 		5A685269292D05BD007FA624 /* StateUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A685268292D05BD007FA624 /* StateUI.swift */; };
+		5A7EF0B32971A13800C42B5B /* Measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A7EF0B22971A13800C42B5B /* Measure.swift */; };
 		5A8220322906939500A17642 /* View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8220312906939500A17642 /* View.swift */; };
 		5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630828ED85A4001AEE3D /* gapsApp.swift */; };
 		5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630A28ED85A4001AEE3D /* ContentView.swift */; };
@@ -46,6 +47,7 @@
 		5A0BBD1229009AA4008F4936 /* Move.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Move.swift; sourceTree = "<group>"; };
 		5A32134228FDC07900E15F89 /* Graph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graph.swift; sourceTree = "<group>"; };
 		5A685268292D05BD007FA624 /* StateUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateUI.swift; sourceTree = "<group>"; };
+		5A7EF0B22971A13800C42B5B /* Measure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Measure.swift; sourceTree = "<group>"; };
 		5A8220312906939500A17642 /* View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View.swift; sourceTree = "<group>"; };
 		5AEC630528ED85A4001AEE3D /* gaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AEC630828ED85A4001AEE3D /* gapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gapsApp.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				5A685268292D05BD007FA624 /* StateUI.swift */,
+				5A7EF0B22971A13800C42B5B /* Measure.swift */,
 			);
 			path = components;
 			sourceTree = "<group>";
@@ -304,6 +307,7 @@
 			files = (
 				5A685269292D05BD007FA624 /* StateUI.swift in Sources */,
 				5A32134328FDC07900E15F89 /* Graph.swift in Sources */,
+				5A7EF0B32971A13800C42B5B /* Measure.swift in Sources */,
 				5A0BBD1329009AA4008F4936 /* Move.swift in Sources */,
 				5A8220322906939500A17642 /* View.swift in Sources */,
 				5AEC633D28ED9DD9001AEE3D /* Matrix.swift in Sources */,
