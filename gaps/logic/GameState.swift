@@ -195,15 +195,10 @@ class GameState: Matrix<Card?> {
     }
 
     func loadSeed(seed: String) {
-        assert(seed.count == 4 + (self.rows * self.columns * 2), "Invalid seed")
-
         var index = seed.startIndex ..< seed.index(seed.startIndex, offsetBy: 2)
         let rows = Int(seed[index])!
         index = seed.index(seed.startIndex, offsetBy: 2) ..< seed.index(seed.startIndex, offsetBy: 4)
         let columns = Int(seed[index])!
-
-        assert(columns == self.columns, "Invalid seed")
-        assert(rows == self.rows, "Invalid seed")
         
         self.rows = rows
         self.columns = columns
@@ -291,32 +286,25 @@ class GameState: Matrix<Card?> {
 
         return acesMoves
     }
-
-    /**
-    Find all moves based on the game rules
-     */
-    func computeMoves() {
-        DispatchQueue.main.async {
-            self._moves = []
-        }
+    
+    func getMoves() -> [Move] {
+        var moves: [Move] = []
 
         for gap in gaps {
             // If the gap is at the begining of a row, then all aces can fill it
             if gap.0 <= 0 {
-                DispatchQueue.main.async {
-                    self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
-                        card?.rank == .ACE
-                    })
-                }
+                moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
+                    card?.rank == .ACE
+                })
                 continue
             }
             
             // Get the previous card in the game state
             let leftCard: Card? = self.previous(position: gap)
             if leftCard == nil {
-                self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
-                    card != nil
-                })
+                // self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
+                //    card != nil
+                // })
                 continue
             }
 
@@ -348,9 +336,18 @@ class GameState: Matrix<Card?> {
                     parentState: self
             )
             
-            DispatchQueue.main.async {
-                self._moves.append(m)
-            }
+            moves.append(m)
+        }
+        
+        return moves
+    }
+
+    /**
+    Find all moves based on the game rules
+     */
+    func computeMoves() {
+        DispatchQueue.main.async {
+            self._moves = self.getMoves()
         }
     }
 
@@ -567,7 +564,7 @@ class GameState: Matrix<Card?> {
      Breadth first search: insert the state at the end of the list (queue.append(state))
      */
     func generalizedSearch(
-            insert: (inout [GameState], GameState) -> Void
+            insert: (inout [GameState], inout GameState) -> Void
     ) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
@@ -584,17 +581,17 @@ class GameState: Matrix<Card?> {
             
             if Task.isCancelled { return nil }
 
-            state.computeMoves()
+            let stateMoves = state.getMoves()
 
-            for move in state._moves {
-                if Task.isCancelled { return nil }
+            for move in stateMoves {
+                var newState = move.state
                 
-                let newState = move.state
+                if Task.isCancelled { return nil }
 
                 if !visited.contains(where: { state in
                     return state.isEquals(to: newState)
                 }) {
-                    insert(&queue, newState)
+                    insert(&queue, &newState)
                 }
             }
         }
@@ -639,9 +636,9 @@ class GameState: Matrix<Card?> {
             
             if Task.isCancelled { return nil }
 
-            state.computeMoves()
+            let stateMoves = state.getMoves()
 
-            for move in state._moves {
+            for move in stateMoves {
                 if Task.isCancelled { return nil }
                 
                 let newState = move.state
