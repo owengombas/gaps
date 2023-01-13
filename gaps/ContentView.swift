@@ -26,7 +26,8 @@ struct ContentView: View {
     @State var _seed: String = ""
     @State var _scroll: ScrollViewProxy? = nil
     @State var _viewChildren: Bool = false
-    @State var _closedNodesOverTime: [Measure] = []
+    @State var _closedNodesOverTimePerAlgorithms: [Measure] = []
+    @State var _closedNodesOverTimePerHeuristics: [Measure] = []
     
     func generateNewGame() {
         self._selected = nil
@@ -82,7 +83,7 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping (@escaping (Int) -> Void) async -> GameState?) {
+    func perform(name: String = "", algorithm: @escaping (@escaping (Int) -> Void) async -> GameState?, heuristicName: String? = nil) {
         self.scroll(to: "algorithm")
         
         self.writeLog()
@@ -106,7 +107,11 @@ struct ContentView: View {
                     let t = self._time
                     if t != 0 {
                         self.writeLog(logs: "(\(Int(Double(nodeInterval) / dT)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
-                        self._closedNodesOverTime.append(Measure(closedCount: closedCount, time: dT, algorithm: name))
+                        self._closedNodesOverTimePerAlgorithms.append(Measure(count: closedCount, time: dT, name: name))
+                        
+                        if heuristicName != nil {
+                            self._closedNodesOverTimePerHeuristics.append(Measure(count: closedCount, time: dT, name: heuristicName!))
+                        }
                     }
                     lastT = t
                 }
@@ -304,7 +309,7 @@ struct ContentView: View {
                                     }
                                     
                                     Button("Perform A*") {
-                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch)
+                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch, heuristicName: "Misplaced cards")
                                     }
                                 }.disabled(self._performingAlgorithm)
                             }
@@ -380,30 +385,58 @@ struct ContentView: View {
                             }.disabled(self._performingAlgorithm)
                         }
                         
-                        TextEditor(text: .constant(self._logs)).disabled(true)
+                        if self._logs.count > 0 {
+                            TextEditor(text: .constant(self._logs)).disabled(true)
+                        }
                     }
                     
                     if #available(macOS 13.0, *) {
-                        VStack {
-                            VStack(spacing: 40) {
-                                Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold().id("title")
-                                
-                                Chart {
-                                    ForEach(self._closedNodesOverTime) { shape in
-                                        LineMark(
-                                            x: .value("Closed nodes", shape.closedCount),
-                                            y: .value("Time (s)", shape.time)
-                                        ).foregroundStyle(by: .value("Algorithm", shape.algorithm))
+                        VStack(spacing: 100) {
+                            if _closedNodesOverTimePerAlgorithms.count > 1 {
+                                VStack(spacing: 40) {
+                                    Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold()
+                                    
+                                    Chart {
+                                        ForEach(self._closedNodesOverTimePerAlgorithms) { shape in
+                                            LineMark(
+                                                x: .value("Closed nodes", shape.count),
+                                                y: .value("Time (s)", shape.time)
+                                            ).foregroundStyle(by: .value("Algorithm", shape.name))
+                                        }
+                                    }.chartForegroundStyleScale([
+                                        "A*": .green, "DFS": .pink, "BFS": .orange
+                                    ])
+                                    .chartXAxisLabel("Closed nodes")
+                                    .chartYAxisLabel("Time (s)")
+                                    .frame(minHeight: 600)
+                                    
+                                    Button("Clear measurements") {
+                                        self._closedNodesOverTimePerAlgorithms = []
                                     }
-                                }.chartForegroundStyleScale([
-                                    "A*": .green, "DFS": .purple, "BFS": .pink
-                                ])
-                                .chartXAxisLabel("Closed nodes")
-                                .chartYAxisLabel("Time (s)")
-                                .frame(minHeight: 600)
-                                
-                                Button("Clear measurements") {
-                                    self._closedNodesOverTime = []
+                                }
+                            }
+                            
+                            if _closedNodesOverTimePerHeuristics.count > 1 {
+                                VStack(spacing: 40) {
+                                    Text("Closed nodes over time per heuristics (on A*)").font(.system(size: 20)).bold()
+                                    
+                                    Chart {
+                                        ForEach(self._closedNodesOverTimePerHeuristics) { shape in
+                                            LineMark(
+                                                x: .value("Closed nodes", shape.count),
+                                                y: .value("Time (s)", shape.time)
+                                            ).foregroundStyle(by: .value("Algorithm", shape.name))
+                                        }
+                                    }.chartForegroundStyleScale([
+                                        "Misplaced cards": .cyan
+                                    ])
+                                    .chartXAxisLabel("Closed nodes")
+                                    .chartYAxisLabel("Time (s)")
+                                    .frame(minHeight: 600)
+                                    
+                                    Button("Clear measurements") {
+                                        self._closedNodesOverTimePerHeuristics = []
+                                    }
                                 }
                             }
                         }

@@ -8,8 +8,8 @@
 import Foundation
 
 struct Measure: Identifiable {
-    var closedCount: Int
+    var count: Int
     var time: Double
-    var algorithm: String
+    var name: String
     var id = UUID()
 }
