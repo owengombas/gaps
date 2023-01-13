@@ -79,7 +79,7 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping () async -> GameState?) {
+    func perform(name: String = "", algorithm: @escaping (@escaping (Int) -> Void) async -> GameState?) {
         self.scroll(to: "algorithm")
         
         self.writeLog()
@@ -88,26 +88,44 @@ struct ContentView: View {
         
         self.writeLog(logs: "Performing algorithm \(name)", lineReturn: false)
         
-        self._time = 0
+        self._time = 0.0
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
         
         self._algorithmTask = Task {
-            let result = await algorithm()
+            var lastT = self._time
+            var closedNodesCount = 0
+            let result = await algorithm { closedCount in
+                let nodeInterval = 100
+                if closedCount % nodeInterval == 0 {
+                    let dT = self._time - lastT
+                    self.writeLog(logs: "Visited \(closedCount)")
+                    
+                    let t = self._time
+                    if t != 0 {
+                        self.writeLog(logs: "(\(Int(Double(nodeInterval) / dT)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
+                    }
+                    lastT = t
+                }
+                closedNodesCount = closedCount
+            }
+            
+            let nodesPerSecondes = Int(Double(closedNodesCount) / self._time)
+            
             self._timer?.invalidate()
             
             if result === nil {
                 self._performingAlgorithm = false
-                self.writeLog(logs: "No solution found \(String(format: "%.2f", self._time)) seconds", lineReturn: true)
+                self.writeLog(logs: "No solution found \(String(format: "%.2f", self._time)) seconds (with performance: \(nodesPerSecondes) nodes/s)", lineReturn: true)
                 return
             }
             
             if result!.score > 0 {
-                self.writeLog(logs: "Found a partial solution in \(String(format: "%.2f", self._time)) seconds, the game couldn't be fully solved, showing the best solution found...", lineReturn: true)
+                self.writeLog(logs: "The game couldn't be fully solved, showing the best solution found...", lineReturn: true)
             }
             
             let bestStatePath = result!.rewind()
             
-            self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
+            self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds (with performance: \(nodesPerSecondes) nodes/s) and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
             self._performingAlgorithm = false
             
             await wait(seconds: 1)

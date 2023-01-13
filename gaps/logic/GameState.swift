@@ -589,7 +589,8 @@ class GameState: Matrix<Card?> {
      Breadth first search: insert the state at the end of the list (queue.append(state))
      */
     func generalizedSearch(
-            insert: (inout [GameState], inout GameState) -> Void
+            insert: (inout [GameState], inout GameState) -> Void,
+            onClosedAdded: ((Int) -> Void)? = nil
     ) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
@@ -599,7 +600,9 @@ class GameState: Matrix<Card?> {
 
         while queue.count > 0 {
             let state = queue.removeFirst()
+
             visited.append(state)
+            onClosedAdded?(visited.count)
 
             if state.score < bestState.score {
                 bestState = state
@@ -632,25 +635,25 @@ class GameState: Matrix<Card?> {
     /**
      Depth first search
      */
-    func depthFirstSearch() async -> GameState? {
+    func depthFirstSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
-        })
+        }, onClosedAdded: onClosedAdded)
     }
 
     /**
      Breadth first search
      */
-    func breadthFirstSearch() async -> GameState? {
+    func breadthFirstSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
-        })
+        }, onClosedAdded: onClosedAdded)
     }
 
     /**
      A* search
      */
-    func aStarSearch() async -> GameState? {
+    func aStarSearch(onClosedAdded: ((Int) -> Void)? = nil) async -> GameState? {
         var queue: [GameState] = []
         var visited: [GameState] = []
 
@@ -659,7 +662,9 @@ class GameState: Matrix<Card?> {
 
         while queue.count > 0 {
             let state = queue.removeFirst()
+
             visited.append(state)
+            onClosedAdded?(visited.count)
 
             if state.score < bestState.score {
                 bestState = state
