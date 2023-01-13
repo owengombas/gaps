@@ -466,7 +466,7 @@ struct ContentView: View {
                             
                             if _betterStateFoundOverTime.count > 1 {
                                 VStack(spacing: 40) {
-                                    Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold()
+                                    Text("Better score on state found per algorithms").font(.system(size: 20)).bold()
                                     
                                     Chart {
                                         ForEach(self._betterStateFoundOverTime) { shape in
