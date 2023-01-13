@@ -110,7 +110,7 @@ struct ContentView: View {
                 closedNodesCount = closedCount
             }
             
-            let nodesPerSecondes = Int(Double(closedNodesCount) / self._time)
+            let nodesPerSecondes = Int(Double(closedNodesCount) / (self._time == 0 ? 1 : self._time))
             
             self._timer?.invalidate()
             
