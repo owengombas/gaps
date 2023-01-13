@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var _timer: Timer? = nil
     @State private var _time: Double = 0
     @State var _seed: String = ""
+    @State var _scroll: ScrollViewProxy? = nil
     
     func generateNewGame() {
         self._selected = nil
@@ -64,6 +65,12 @@ struct ContentView: View {
         try? await Task.sleep(nanoseconds: UInt64(seconds * Double(NSEC_PER_SEC)))
     }
     
+    func scroll(to: String, anchor: UnitPoint = .top) {
+        withAnimation {
+            self._scroll!.scrollTo(to, anchor: .top)
+        }
+    }
+    
     func showBestStateAnimation(bestStatePath: [GameState], seconds: Double) async {
         for state in bestStatePath {
             self._bestState.copy(from: state)
@@ -72,10 +79,8 @@ struct ContentView: View {
         self._state.computeMoves()
     }
     
-    func perform(name: String = "", algorithm: @escaping () async -> GameState?, scroll: ScrollViewProxy) {
-        withAnimation {
-            scroll.scrollTo("algorithm", anchor: .top)
-        }
+    func perform(name: String = "", algorithm: @escaping () async -> GameState?) {
+        self.scroll(to: "algorithm")
         
         self.writeLog()
         self._performingAlgorithm = true
@@ -206,9 +211,16 @@ struct ContentView: View {
     }
     
     func onLoadSeed() {
-        self._state.loadSeed(seed: self._seed)
-        self._bestState.copy(from: self._state)
-        self._state.computeMoves()
+        let isOkay = self._state.loadSeed(seed: self._seed)
+        
+        if isOkay {
+            self._bestState.copy(from: self._state)
+            self._state.computeMoves()
+        } else {
+            self.writeLog()
+            self.writeLog(logs: "Wrong seed format", lineReturn: false)
+            self.scroll(to: "algorithm")
+        }
     }
     
     var body: some View {
@@ -261,15 +273,15 @@ struct ContentView: View {
                             VStack {
                                 HStack {
                                     Button("Perform DFS") {
-                                        self.perform(name: "dfs", algorithm: self._bestState.depthFirstSearch, scroll: scroll)
+                                        self.perform(name: "dfs", algorithm: self._bestState.depthFirstSearch)
                                     }
                                     
                                     Button("Perform BFS") {
-                                        self.perform(name: "bfs", algorithm: self._bestState.breadthFirstSearch, scroll: scroll)
+                                        self.perform(name: "bfs", algorithm: self._bestState.breadthFirstSearch)
                                     }
                                     
                                     Button("Perform A*") {
-                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch, scroll: scroll)
+                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch)
                                     }
                                 }.disabled(self._performingAlgorithm)
                             }
@@ -317,17 +329,16 @@ struct ContentView: View {
                             Button("Stop execution", action: self.interruptCurrentTask).disabled(!self._performingAlgorithm)
                         } else {
                             Button("Apply to main game") {
-                                withAnimation {
-                                    scroll.scrollTo("title", anchor: .top)
-                                }
-                                
+                                self.scroll(to: "title")
                                 self.copyBestStateToMainGame()
                             }.disabled(self._performingAlgorithm)
                         }
                         
                         TextEditor(text: .constant(self._logs)).disabled(true)
                     }
-                }.padding(20)
+                }.padding(20).onAppear {
+                    self._scroll = scroll
+                }
             }
         }.onAppear {
             self._bestState.copy(from: self._state)

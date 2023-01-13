@@ -194,29 +194,52 @@ class GameState: Matrix<Card?> {
         })
     }
 
-    func loadSeed(seed: String) {
-        var index = seed.startIndex ..< seed.index(seed.startIndex, offsetBy: 2)
-        let rows = Int(seed[index])!
-        index = seed.index(seed.startIndex, offsetBy: 2) ..< seed.index(seed.startIndex, offsetBy: 4)
-        let columns = Int(seed[index])!
+    func loadSeed(seed: String) -> Bool {
+        if seed.count < 4 {
+            return false
+        }
         
-        self.rows = rows
-        self.columns = columns
+        var index = seed.startIndex ..< seed.index(seed.startIndex, offsetBy: 2)
+        let rows = Int(seed[index])
+        index = seed.index(seed.startIndex, offsetBy: 2) ..< seed.index(seed.startIndex, offsetBy: 4)
+        let columns = Int(seed[index])
+        
+        if rows == nil || columns == nil {
+            return false
+        }
+        
+        if seed.count < rows! * columns! * 2 + 4 {
+            return false
+        }
+        
+        self.rows = rows!
+        self.columns = columns!
+        
+        let tempState = self.copy()
 
-        for row in 0 ..< rows {
-            for column in 0 ..< columns {
-                let number = row * columns + column
+        for row in 0 ..< tempState.rows {
+            for column in 0 ..< tempState.columns {
+                let number = row * tempState.columns + column
 
                 index = seed.index(seed.startIndex, offsetBy: 4 + (number * 2)) ..< seed.index(seed.startIndex, offsetBy: 4 + (number * 2) + 2)
                 let value = String(seed[index])
 
                 if value == "XX" {
-                    self.setElement(i: column, j: row, value: nil)
+                    tempState.setElement(i: column, j: row, value: nil)
                 } else {
-                    self.setElement(i: column, j: row, value: Card.fromNumber(number: Int(value)!, columns: self.columns, rows: self.rows))
+                    let intValue = Int(value)
+                    if intValue != nil {
+                        tempState.setElement(i: column, j: row, value: Card.fromNumber(number: intValue!, columns: self.columns, rows: self.rows))
+                    } else {
+                        return false
+                    }
                 }
             }
         }
+        
+        self.copy(from: tempState)
+        
+        return true
     }
 
     /**
