@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState(columns: 4, rows: 1)
+    @StateObject private var _state: GameState = GameState(columns: 13, rows: 4)
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
@@ -80,7 +80,7 @@ struct ContentView: View {
         self._performingAlgorithm = true
         self._bestState.copy(from: self._state)
         
-        self.writeLog(logs: "Performing algorithm \(name) (with max closed nodes: \(self._maxClosed))", lineReturn: false)
+        self.writeLog(logs: "Performing algorithm \(name)", lineReturn: false)
         
         self._time = 0
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
@@ -332,8 +332,6 @@ struct ContentView: View {
             }
         }.onAppear {
             self._bestState.copy(from: self._state)
-            self._state.loadSeed(seed: "0104XX000102")
-            self._state.computeMoves()
         }
     }
 }
