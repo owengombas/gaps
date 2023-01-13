@@ -318,17 +318,23 @@ struct ContentView: View {
                                             self._viewChildren = false
                                         }
                                         
-                                        Spacer(minLength: 10)
+                                        Spacer(minLength: 50)
                                         
-                                        VStack {
+                                        VStack(spacing: 50) {
                                             ForEach(self._state.moves, id: \.state.description) { move in
-                                                StateUI(
-                                                    state: self._state.copy().performMove(move: move),
-                                                    selected: Binding.constant(nil),
-                                                    peformMovesSafely: Binding.constant(false),
-                                                    blockMove: Binding.constant(true),
-                                                    cardWidth: 30
-                                                ).frame(maxWidth: .infinity)
+                                                VStack {
+                                                    StateUI(
+                                                        state: self._state.copy().performMove(move: move),
+                                                        selected: Binding.constant(nil),
+                                                        peformMovesSafely: Binding.constant(false),
+                                                        blockMove: Binding.constant(true),
+                                                        cardWidth: 30
+                                                    ).frame(maxWidth: .infinity)
+                                                    
+                                                    Button("Peform this move - \(move.description)") {
+                                                        self._state.performMove(move: move)
+                                                    }
+                                                }
                                             }
                                         }
                                     } else {
