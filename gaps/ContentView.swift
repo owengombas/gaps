@@ -9,7 +9,7 @@ import SwiftUI
 import Charts
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState(columns: 13, rows: 4)
+    @StateObject private var _state: GameState = GameState(columns: 5, rows: 4)
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
@@ -189,7 +189,11 @@ struct ContentView: View {
         }
         self._timer?.invalidate()
         
+        await wait(seconds: 1)
+        
+        self._performingAnimation = true
         await self.showBestStateAnimation(bestStatePath: self._tempBestState.rewind(), seconds: 0.25)
+        self._performingAnimation = false
     }
     
     func changeRows(_ nb: Int) {
@@ -469,7 +473,7 @@ struct ContentView: View {
                             )
                         }
                     }
-                }.padding(20).onAppear {
+                }.onAppear {
                     self._scroll = scroll
                 }
             }

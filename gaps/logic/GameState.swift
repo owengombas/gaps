@@ -157,6 +157,7 @@ class GameState: Matrix<Card?> {
         DispatchQueue.main.async {
             self._removedCards = from.removedCards
             self._moves = from.moves
+            self._parent = from.parent
         }
     }
 
@@ -599,15 +600,18 @@ class GameState: Matrix<Card?> {
 
         queue.append(self)
         var bestState: GameState = self
+        var bestScore: Int = bestState.score
 
         while queue.count > 0 {
             let state = queue.removeFirst()
+            let stateScore = state.score
 
             visited.append(state)
             onClosedAdded?(visited.count)
-
-            if state.score < bestState.score {
+            
+            if stateScore < bestScore {
                 bestState = state
+                bestScore = bestState.score
                 onBetterStateFound?(bestState)
             }
 
@@ -622,6 +626,7 @@ class GameState: Matrix<Card?> {
 
             for move in stateMoves {
                 var newState = move.state
+                let stateScore = newState.score
                 
                 if Task.isCancelled { return nil }
 
@@ -630,8 +635,9 @@ class GameState: Matrix<Card?> {
                 }) {
                     insert(&queue, &newState)
                     
-                    if newState.score < bestState.score {
+                    if stateScore < bestScore {
                         bestState = state
+                        bestScore = bestState.score
                         onBetterStateFound?(bestState)
                     }
                 }
