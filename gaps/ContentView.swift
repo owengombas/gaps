@@ -419,7 +419,7 @@ struct ContentView: View {
                         if self._logs.count > 0 {
                             TextEditor(text: .constant(self._logs))
                                 .frame(height: 300)
-                                .textSelection(.enabled)
+                                .font(.system(size: 11).monospaced())
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
