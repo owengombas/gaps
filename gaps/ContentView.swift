@@ -440,7 +440,8 @@ struct ContentView: View {
                                 colorTitle: Binding.constant("Algorithm"),
                                 colorsTitles: Binding.constant([
                                     "A*": .green, "DFS": .pink, "BFS": .orange
-                                ])
+                                ]),
+                                showIfNotEmpty: Binding.constant(true)
                             )
                             
                             ChartUI(
@@ -451,7 +452,8 @@ struct ContentView: View {
                                 colorTitle: Binding.constant("Algorithm"),
                                 colorsTitles: Binding.constant([
                                     "A*": .green, "DFS": .pink, "BFS": .orange
-                                ])
+                                ]),
+                                showIfNotEmpty: Binding.constant(true)
                             )
                             
                             ChartUI(
@@ -462,7 +464,8 @@ struct ContentView: View {
                                 colorTitle: Binding.constant("Heuristic"),
                                 colorsTitles: Binding.constant([
                                     "Misplaced cards": .cyan
-                                ])
+                                ]),
+                                showIfNotEmpty: Binding.constant(true)
                             )
                         }
                     }

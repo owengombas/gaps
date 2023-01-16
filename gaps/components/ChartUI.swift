@@ -15,10 +15,11 @@ struct ChartUI: View {
     @Binding var yTitle: String
     @Binding var colorTitle: String
     @Binding var colorsTitles: KeyValuePairs<String, Color>
+    @Binding var showIfNotEmpty: Bool
     
     var body: some View {
         if #available(macOS 13.0, *) {
-            if self.values.count > 1 {
+            if self.values.count > 1 || self.showIfNotEmpty {
                 VStack(spacing: 40) {
                     Text(title).font(.system(size: 20)).bold()
                     
@@ -51,7 +52,8 @@ struct ChartUI_Previews: PreviewProvider {
             xTitle: Binding.constant(""),
             yTitle: Binding.constant(""),
             colorTitle: Binding.constant(""),
-            colorsTitles: Binding.constant([:])
+            colorsTitles: Binding.constant([:]),
+            showIfNotEmpty: Binding.constant(true)
         )
     }
 }
