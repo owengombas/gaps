@@ -104,6 +104,7 @@ struct ContentView: View {
         self.writeLog(logs: "Performing algorithm \(name)", lineReturn: false)
         
         self._time = 0.0
+        self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(self._state.score), z: name))
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
         
         self._algorithmTask = Task {
