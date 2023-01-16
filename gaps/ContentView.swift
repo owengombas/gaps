@@ -123,7 +123,7 @@ struct ContentView: View {
                     
                     let nodesPerSeconds = Double(nodeInterval) / dT
                     
-                    self.writeLog(logs: "(\(Int(nodesPerSeconds)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
+                    self.writeLog(logs: "(\(String(format: "%.2f", nodesPerSeconds)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
                     
                     self._closedNodesOverTimePerAlgorithms.append(Measure(x: Double(closedCount), y: dT, z: name))
                     
