@@ -46,7 +46,7 @@ struct StateUI: View {
         let pos = self.getPositionFromHGridIndex(index: index)
         let m = Move(card: self.selected!, to: pos, state: self.state, parentState: self.state)
         
-        self.state.performMove(move: m, verify: self.peformMovesSafely)
+        let _ = self.state.performMove(move: m, verify: self.peformMovesSafely)
         self.state.computeMoves()
         
         self.onCardChange?(self._selected.wrappedValue!, pos)

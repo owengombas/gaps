@@ -138,6 +138,7 @@ struct ContentView: View {
             let onBetterStateFound: ((GameState) -> Void) = { state in
                 self.writeLog(logs: "Better state found with score \(state.score)")
                 self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(state.score), z: name))
+                self._tempBestState.copy(from: state)
             }
             
             let result = await algorithm(onClosedAdded, onBetterStateFound)
@@ -171,7 +172,7 @@ struct ContentView: View {
         }
     }
     
-    func interruptCurrentTask() {
+    func interruptCurrentTask() async {
         if !self._performingAlgorithm {
             return
         }
@@ -185,10 +186,9 @@ struct ContentView: View {
         } else {
             self.writeLog(logs: "No better state found during the execution", lineReturn: true)
         }
-        
-        self._tempBestState.copy(from: self._state)
-        self._bestState.copy(from: self._tempBestState)
         self._timer?.invalidate()
+        
+        await self.showBestStateAnimation(bestStatePath: self._tempBestState.rewind(), seconds: 0.25)
     }
     
     func changeRows(_ nb: Int) {
@@ -239,13 +239,15 @@ struct ContentView: View {
         print(logs)
         
         if lineReturn {
-            self._logs += "\n"
+            self._logs = "\n" + self._logs
         }
         
+        var res = ""
         for log in logs {
-            self._logs += String(describing: log)
-            self._logs += " "
+            res = String(describing: log) + " "
         }
+        
+        self._logs = res + self._logs
     }
     
     func onbetterStateFound(betterState: GameState, count: Int) -> Void {
@@ -363,7 +365,7 @@ struct ContentView: View {
                                                     ).frame(maxWidth: .infinity)
                                                     
                                                     Button("Peform this move - \(move.description)") {
-                                                        self._state.performMove(move: move)
+                                                        let _ = self._state.performMove(move: move)
                                                     }
                                                 }
                                             }
@@ -401,7 +403,11 @@ struct ContentView: View {
                         }
                         
                         if self._performingAlgorithm {
-                            Button("Stop execution", action: self.interruptCurrentTask).disabled(!self._performingAlgorithm)
+                            Button("Stop execution") {
+                                Task {
+                                   await self.interruptCurrentTask()
+                                }
+                            }.disabled(!self._performingAlgorithm)
                         } else {
                             Button("Apply to main game") {
                                 self.scroll(to: "title")
@@ -410,83 +416,47 @@ struct ContentView: View {
                         }
                         
                         if self._logs.count > 0 {
-                            TextEditor(text: .constant(self._logs)).disabled(true)
+                            TextEditor(text: .constant(self._logs))
+                                .frame(height: 300)
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     
                     if #available(macOS 13.0, *) {
                         VStack(spacing: 100) {
-                            if _closedNodesOverTimePerAlgorithms.count > 1 {
-                                VStack(spacing: 40) {
-                                    Text("Closed nodes over time per algorithms").font(.system(size: 20)).bold()
-                                    
-                                    Chart {
-                                        ForEach(self._closedNodesOverTimePerAlgorithms) { shape in
-                                            LineMark(
-                                                x: .value("Closed nodes", shape.x),
-                                                y: .value("Time (s)", shape.y)
-                                            ).foregroundStyle(by: .value("Algorithm", shape.z))
-                                        }
-                                    }.chartForegroundStyleScale([
-                                        "A*": .green, "DFS": .pink, "BFS": .orange
-                                    ])
-                                    .chartXAxisLabel("Closed nodes")
-                                    .chartYAxisLabel("Time (s)")
-                                    .frame(minHeight: 600)
-                                    
-                                    Button("Clear measurements") {
-                                        self._closedNodesOverTimePerAlgorithms = []
-                                    }
-                                }
-                            }
+                            ChartUI(
+                                values: self.$_closedNodesOverTimePerAlgorithms,
+                                title: Binding.constant("Closed nodes over time per algorithms"),
+                                xTitle: Binding.constant("Closed nodes"),
+                                yTitle: Binding.constant("Time (s)"),
+                                colorTitle: Binding.constant("Algorithm"),
+                                colorsTitles: Binding.constant([
+                                    "A*": .green, "DFS": .pink, "BFS": .orange
+                                ])
+                            )
                             
-                            if _closedNodesOverTimePerHeuristics.count > 1 {
-                                VStack(spacing: 40) {
-                                    Text("Closed nodes over time per heuristics (on A*)").font(.system(size: 20)).bold()
-                                    
-                                    Chart {
-                                        ForEach(self._closedNodesOverTimePerHeuristics) { shape in
-                                            LineMark(
-                                                x: .value("Closed nodes", shape.x),
-                                                y: .value("Time (s)", shape.y)
-                                            ).foregroundStyle(by: .value("Heuristic", shape.z))
-                                        }
-                                    }.chartForegroundStyleScale([
-                                        "Misplaced cards": .cyan
-                                    ])
-                                    .chartXAxisLabel("Closed nodes")
-                                    .chartYAxisLabel("Time (s)")
-                                    .frame(minHeight: 600)
-                                    
-                                    Button("Clear measurements") {
-                                        self._closedNodesOverTimePerHeuristics = []
-                                    }
-                                }
-                            }
+                            ChartUI(
+                                values: self.$_betterStateFoundOverTime,
+                                title: Binding.constant("Better score on state found per algorithms"),
+                                xTitle: Binding.constant("Time (s)"),
+                                yTitle: Binding.constant("State score"),
+                                colorTitle: Binding.constant("Algorithm"),
+                                colorsTitles: Binding.constant([
+                                    "A*": .green, "DFS": .pink, "BFS": .orange
+                                ])
+                            )
                             
-                            if _betterStateFoundOverTime.count > 1 {
-                                VStack(spacing: 40) {
-                                    Text("Better score on state found per algorithms").font(.system(size: 20)).bold()
-                                    
-                                    Chart {
-                                        ForEach(self._betterStateFoundOverTime) { shape in
-                                            LineMark(
-                                                x: .value("Time (s)", shape.x),
-                                                y: .value("State score", shape.y)
-                                            ).foregroundStyle(by: .value("Algorithm", shape.z))
-                                        }
-                                    }.chartForegroundStyleScale([
-                                        "A*": .green, "DFS": .pink, "BFS": .orange
-                                    ])
-                                    .chartXAxisLabel("Time (s)")
-                                    .chartYAxisLabel("State score")
-                                    .frame(minHeight: 600)
-                                    
-                                    Button("Clear measurements") {
-                                        self._betterStateFoundOverTime = []
-                                    }
-                                }
-                            }
+                            ChartUI(
+                                values: self.$_closedNodesOverTimePerHeuristics,
+                                title: Binding.constant("Closed nodes over time per heuristics (on A*)"),
+                                xTitle: Binding.constant("Closed nodes"),
+                                yTitle: Binding.constant("Time (s)"),
+                                colorTitle: Binding.constant("Heuristic"),
+                                colorsTitles: Binding.constant([
+                                    "Misplaced cards": .cyan
+                                ])
+                            )
                         }
                     }
                 }.padding(20).onAppear {
@@ -496,6 +466,7 @@ struct ContentView: View {
         }.onAppear {
             self._bestState.copy(from: self._state)
         }
+        .frame(height: 800)
     }
 }
 
