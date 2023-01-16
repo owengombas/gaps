@@ -416,11 +416,17 @@ struct ContentView: View {
                             }.disabled(self._performingAlgorithm)
                         }
                         
-                        if self._logs.count > 0 {
+                        Spacer(minLength: 50)
+                        
+                        VStack {
                             TextEditor(text: .constant(self._logs))
                                 .frame(height: 300)
                                 .font(.system(size: 11).monospaced())
                                 .fixedSize(horizontal: false, vertical: true)
+                            
+                            Button("Clear logs") {
+                                self._logs = ""
+                            }
                         }
                     }
                     
