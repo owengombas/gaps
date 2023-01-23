@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
+    @State private var _stateScore: Int = 0
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4
     @State private var _selected: Card? = nil
@@ -86,10 +87,10 @@ struct ContentView: View {
     
     func perform(
         name: String = "",
-        algorithm: @escaping ((
-            @escaping ((Int) -> Void),
-            @escaping ((GameState) -> Void)
-        ) async -> GameState?),
+        algorithm: @escaping (
+            @escaping (Int) -> Void,
+            @escaping (GameState) -> Void
+        ) async -> GameState?,
         heuristicName: String? = nil
     ) {
         self.scroll(to: "algorithm")
@@ -102,16 +103,17 @@ struct ContentView: View {
         self._bestState.copy(from: self._state)
         
         self.writeLog(logs: "Performing algorithm \(name)", lineReturn: false)
-        
+
         self._time = 0.0
-        self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(self._state.score), z: name))
+        let misplacedCards = self._state.countMisplacedCards()
+        self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
         
         self._algorithmTask = Task {
             var lastT = self._time
             var closedNodesCount = 0
             
-            let onClosedAdded: ((Int) -> Void) = { closedCount in
+            let onClosedAdded: (Int) -> Void = { closedCount in
                 let nodeInterval = 25
                 if closedCount % nodeInterval == 0 {
                     var dT = self._time - lastT
@@ -136,9 +138,10 @@ struct ContentView: View {
                 closedNodesCount = closedCount
             }
             
-            let onBetterStateFound: ((GameState) -> Void) = { state in
-                self.writeLog(logs: "Better state found with score \(state.score)")
-                self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(state.score), z: name))
+            let onBetterStateFound: (GameState) -> Void = { state in
+                let misplacedCards = state.countMisplacedCards()
+                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards")
+                self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
                 self._tempBestState.copy(from: state)
             }
             
@@ -154,7 +157,7 @@ struct ContentView: View {
                 return
             }
             
-            if result!.score > 0 {
+            if result!.countMisplacedCards() > 0 {
                 self.writeLog(logs: "The game couldn't be fully solved, showing the best solution found...", lineReturn: true)
             }
             
@@ -200,7 +203,6 @@ struct ContentView: View {
         if !(1...4).contains(self._state.rows + nb) {
             return
         }
-        
         
         self._state.rows += nb
         self._gaps = self._state.rows
@@ -258,7 +260,7 @@ struct ContentView: View {
     func onbetterStateFound(betterState: GameState, count: Int) -> Void {
         let t = self._time
         let percentage = Double(count) / Double(self._maxClosed) * 100
-        self.writeLog(logs: "\(String(format: "%.3f", percentage))%) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.score) (\(count) node closed)", lineReturn: true)
+        self.writeLog(logs: "\(String(format: "%.3f", percentage))%) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.countMisplacedCards) (\(count) node closed)", lineReturn: true)
         self._tempBestState.copy(from: betterState)
     }
     
@@ -340,7 +342,7 @@ struct ContentView: View {
                                     }
                                     
                                     Button("Perform A*") {
-                                        self.perform(name: "A*", algorithm: self._bestState.aStarSearch, heuristicName: "Misplaced cards")
+                                        self.perform(name: "A*", algorithm: self._bestState.aStar, heuristicName: "Misplaced cards")
                                     }
                                 }.disabled(self._performingAlgorithm)
                             }
@@ -400,7 +402,7 @@ struct ContentView: View {
                             cardWidth: 80,
                             onCardChange: self.onCardChangeAlgorithm
                         )
-                        
+
                         if self._performingAlgorithm {
                             HStack {
                                 ProgressView()

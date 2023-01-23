@@ -57,7 +57,8 @@ struct StateUI: View {
     var body: some View {
         VStack {
             VStack(spacing: 2) {
-                Text("Score: \(self.state.score)").font(.system(size: 20)).bold()
+                Text("Misplaced cards: \(self.state.countMisplacedCards())").font(.system(size: 20)).bold()
+                Text("Heuristic value: \(self.state.heuristicValue)").font(.system(size: 20)).bold()
                 
                 if self.state.isSolved {
                     Text("Solved").font(.system(size: 10)).bold()

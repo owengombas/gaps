@@ -10,10 +10,17 @@ import Foundation
 /**
  Represent a game state
  */
-class GameState: Matrix<Card?> {
+class GameState: Matrix<Card?>, Hashable {
+    static func ==(lhs: GameState, rhs: GameState) -> Bool {
+        return lhs.isEquals(to: rhs)
+    }
+
     @Published private var _moves: [Move] = []
     private var _removedCards: [Card] = []
     private var _parent: GameState? = nil
+
+    private var _gScore: Int = 0
+    private var _fScore: Int = 0
 
     var seed: String {
         get {
@@ -23,15 +30,14 @@ class GameState: Matrix<Card?> {
 
             var seed: String = padding(self.rows) + padding(self.columns)
 
-            for row in 0 ..< self.rows {
-                for column in 0 ..< self.columns {
+            seed += self.values.reduce(into: "") { str, row in
+                str += row.reduce(into: "") { str, card in
                     var strRep = ""
-                    let value = self.getElement(column: column, row: row)
 
-                    if value === nil {
+                    if card === nil {
                         strRep = "XX"
                     } else {
-                        strRep = padding(value!.toNumber(columns: self.columns))
+                        strRep = padding(card!.toNumber(columns: self.columns))
                     }
 
                     seed += strRep
@@ -50,6 +56,12 @@ class GameState: Matrix<Card?> {
             return self.findPositions(condition: { i, j, v, c in
                 return v == nil
             })
+        }
+    }
+
+    var maxRank: CardRank {
+        get {
+            return CardRank.init(rawValue: self.columns - 1)!
         }
     }
 
@@ -79,22 +91,13 @@ class GameState: Matrix<Card?> {
             return self._moves.count <= 0
         }
     }
-
-    /**
-     Get the score of the game state
-     */
-    var score: Int {
-        get {
-            return self.misplacedCards()
-        }
-    }
     
     /**
      Is the GameState final and solved
      */
     var isSolved: Bool {
         get {
-            return self.score == 0
+            return self.countMisplacedCards() == 0
         }
     }
 
@@ -115,6 +118,12 @@ class GameState: Matrix<Card?> {
             return self.values.flatMap { card in
                 return card
             }
+        }
+    }
+
+    var heuristicValue: Int {
+        get {
+            return Heuristic.score(state: self)
         }
     }
 
@@ -256,42 +265,13 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Remove one card randomly
-     */
-    func removeRandomly() -> (Int, Int) {
-        var card: Card? = nil
-        var pos: (Int, Int)? = nil
-
-        while card === nil {
-            let posIndex = Int.random(in: 0..<self.capacity)
-            pos = self.getPositionFrom(index: posIndex)
-
-            card = self.getElement(position: pos!)
-        }
-
-        self.setElement(position: pos!, value: nil)
-        self._removedCards.append(card!)
-
-        return pos!
-    }
-
-    /**
-     Remove randomly N cards from the game
-     */
-    func removeCardsRandomly(numberOfCards: Int) {
-        for _ in 0..<numberOfCards {
-            let _ = self.removeRandomly()
-        }
-    }
-
-    /**
      Generate all moves for a specific card rank to a specific position
      */
     private func getMovesFor(gap: (Int, Int), condition: (Card?) -> Bool) -> [Move] {
         var acesMoves: [Move] = []
 
-        self.forEach { i, j, c, v, m in
-            if condition(c) {
+        self.forEach { i, j, count, value, matrix in
+            if condition(count) {
                 let childrenState: GameState = self.copy()
                 childrenState.parent = self
                 childrenState.swap(posA: (i, j), posB: gap)
@@ -299,7 +279,7 @@ class GameState: Matrix<Card?> {
                 let move = Move(
                         from: (i, j),
                         to: gap,
-                        card: c!,
+                        card: count!,
                         state: childrenState,
                         parentState: self
                 )
@@ -312,31 +292,29 @@ class GameState: Matrix<Card?> {
     }
     
     func getMoves() -> [Move] {
-        var moves: [Move] = []
-
-        for gap in gaps {
+        let moves = gaps.reduce(into: []) { (moves: inout [Move], gap: (Int, Int)) in
             // If the gap is at the begining of a row, then all aces can fill it
             if gap.0 <= 0 {
                 moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
                     card?.rank == .ACE
                 })
-                continue
+                return
             }
-            
+
             // Get the previous card in the game state
             let leftCard: Card? = self.previous(position: gap)
             if leftCard == nil {
                 // self._moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
                 //    card != nil
                 // })
-                continue
+                return
             }
 
             // Get the higher card from the left one
             let higherLeftCard = leftCard!.higher
             if higherLeftCard == nil {
                 // print("NO HIGHER CARD FOR \(leftCard!) AT \(gap)")
-                continue
+                return
 
             }
 
@@ -344,7 +322,7 @@ class GameState: Matrix<Card?> {
             let higherLeftCardPosition = self.find(card: higherLeftCard)
             if higherLeftCardPosition == nil {
                 // print("HIGHER CARD \(higherLeftCard!) POSITION NOT FOUND")
-                continue
+                return
             }
 
             // Copy current state, move the card to the gap and add it to children moves
@@ -359,10 +337,10 @@ class GameState: Matrix<Card?> {
                     state: childrenState,
                     parentState: self
             )
-            
+
             moves.append(m)
         }
-        
+
         return moves
     }
 
@@ -436,7 +414,7 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Get the possible moves for a specified card  (you have to perform computeMoves before)
+     Get the possible moves for a specified card (you have to perform computeMoves before)
      */
     func possibleMoves(card: Card) -> [Move] {
         return self._moves.filter({ move in
@@ -452,7 +430,7 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Get all the possible gaps where a card can be moved in  (you have to perform computeMoves before)
+     Get all the possible gaps where a card can be moved in (you have to perform computeMoves before)
      */
     func possibleGaps(card: Card) -> [Move] {
         return self._moves.filter({ move in
@@ -461,7 +439,7 @@ class GameState: Matrix<Card?> {
     }
 
     /**
-     Can the card be moved inside a specified gap  (you have to perform computeMoves before)
+     Can the card be moved inside a specified gap (you have to perform computeMoves before)
      */
     func isAPossibleGap(card: Card?, gap: (Int, Int)) -> Bool {
         if card === nil {
@@ -481,6 +459,9 @@ class GameState: Matrix<Card?> {
         return false
     }
 
+    /**
+     Can the card be moved inside a specified gap (you have to perform computeMoves before)
+     */
     func isAPossibleGap(card: Card?, gap: Int) -> Bool {
         return self.isAPossibleGap(card: card, gap: self.getPositionFrom(index: gap))
     }
@@ -522,7 +503,7 @@ class GameState: Matrix<Card?> {
     /**
     Get the number of misplaced cards
      */
-    func misplacedCards() -> Int {
+    func countMisplacedCards() -> Int {
         var count = 0
 
         for row in 0..<self.rows {
@@ -543,14 +524,14 @@ class GameState: Matrix<Card?> {
                     if column >= self.columns - 1 {
                         count += 1
                     }
-                    
+
                     break
                 }
-                
+
                 if card!.suit != firstCard!.suit {
                     break
                 }
-                
+
                 if card!.rank.rawValue != column {
                     break
                 }
@@ -565,7 +546,7 @@ class GameState: Matrix<Card?> {
     /**
      Is the GameState equals to an another one
      */
-    func isEquals(to: GameState?) -> Bool {
+    func  isEquals(to: GameState?) -> Bool {
         if self.capacity != to?.capacity {
             return false
         }
@@ -595,52 +576,52 @@ class GameState: Matrix<Card?> {
             onClosedAdded: ((Int) -> Void)? = nil,
             onBetterStateFound: ((GameState) -> Void)? = nil
     ) async -> GameState? {
-        var queue: [GameState] = []
-        var visited: [GameState] = []
-
-        queue.append(self)
         var bestState: GameState = self
-        var bestScore: Int = bestState.score
+        var bestScore: Int = self.countMisplacedCards()
 
-        while queue.count > 0 {
-            let state = queue.removeFirst()
-            let stateScore = state.score
+        var queue: [GameState] = [self]
+        var closed = Set<GameState>()
 
-            visited.append(state)
-            onClosedAdded?(visited.count)
-            
-            if stateScore < bestScore {
-                bestState = state
-                bestScore = bestState.score
-                onBetterStateFound?(bestState)
+        while !queue.isEmpty {
+            if Task.isCancelled { return bestState }
+
+            let checkBetterScore = { (state: GameState) in
+                let stateScore = self.countMisplacedCards()
+
+                if stateScore < bestScore {
+                    bestScore = stateScore
+                    bestState = state
+                    onBetterStateFound?(bestState)
+                }
             }
 
+            let state = queue.removeFirst()
             if state.isSolved {
                 onBetterStateFound?(state)
                 return state
             }
+
+            if closed.contains(state) {
+                continue
+            }
+            closed.insert(state)
+            onClosedAdded?(closed.count)
+            checkBetterScore(state)
             
-            if Task.isCancelled { return nil }
+            if Task.isCancelled { return bestState }
 
             let stateMoves = state.getMoves()
-
             for move in stateMoves {
-                var newState = move.state
-                let stateScore = newState.score
-                
-                if Task.isCancelled { return nil }
+                if Task.isCancelled { return bestState }
 
-                if !visited.contains(where: { state in
-                    return state.isEquals(to: newState)
-                }) {
+                var newState = move.state
+
+                if !closed.contains(newState) {
                     insert(&queue, &newState)
-                    
-                    if stateScore < bestScore {
-                        bestState = state
-                        bestScore = bestState.score
-                        onBetterStateFound?(bestState)
-                    }
+                    checkBetterScore(newState)
                 }
+
+                if Task.isCancelled { return bestState }
             }
         }
 
@@ -671,63 +652,75 @@ class GameState: Matrix<Card?> {
         }, onClosedAdded: onClosedAdded)
     }
 
-    /**
-     A* search
-     */
-    func aStarSearch(
-        onClosedAdded: ((Int) -> Void)? = nil,
-        onBetterStateFound: ((GameState) -> Void)? = nil
+    func aStar(
+            onClosedAdded: ((Int) -> Void)? = nil,
+            onBetterStateFound: ((GameState) -> Void)? = nil
     ) async -> GameState? {
-        var queue: [GameState] = []
-        var visited: [GameState] = []
+        var open = Set<GameState>()
+        var closed = Set<GameState>()
 
-        queue.append(self)
-        var bestState: GameState = self
+        let start = self
+        let heuristicValue = start.heuristicValue
+        start._gScore = 0
+        start._fScore = start._gScore + heuristicValue
+        open.insert(start)
 
-        while queue.count > 0 {
-            let state = queue.removeFirst()
+        var bestState: GameState = start
+        var bestH: Int = heuristicValue
 
-            visited.append(state)
-            onClosedAdded?(visited.count)
+        while !open.isEmpty {
+            if Task.isCancelled { return bestState }
 
-            if state.score < bestState.score {
-                bestState = state
-                onBetterStateFound?(bestState)
-            }
+            let state = open.min(by: { $0._fScore < $1._fScore })!
 
             if state.isSolved {
                 onBetterStateFound?(state)
                 return state
             }
-            
-            if Task.isCancelled { return nil }
 
-            let stateMoves = state.getMoves()
+            open.remove(state)
+            closed.insert(state)
+            onClosedAdded?(closed.count)
 
-            for move in stateMoves {
+            if Task.isCancelled { return bestState }
+
+            let moves = state.getMoves()
+            for move in moves {
+                if Task.isCancelled { return bestState }
+
                 let newState = move.state
 
-                if !visited.contains(where: { state in
-                    return state.isEquals(to: newState)
-                }) {
-                    queue.append(newState)
-                    
-                    if newState.score < bestState.score {
-                        bestState = state
-                        onBetterStateFound?(bestState)
-                    }
+                if closed.contains(newState) {
+                    continue
                 }
-                
-                if Task.isCancelled { return nil }
-            }
-            
-            if Task.isCancelled { return nil }
 
-            queue.sort(by: { stateA, stateB in
-                return stateA.score < stateB.score
-            })
+                let tentativeGScore = state._gScore + 1
+
+                if !open.contains(newState) {
+                    open.insert(newState)
+                } else if tentativeGScore >= newState._gScore {
+                    continue
+                }
+
+                let newHeuristicValue = newState.heuristicValue
+                newState.parent = state
+                newState._gScore = tentativeGScore
+                newState._fScore = newState._gScore + newHeuristicValue
+
+                if newHeuristicValue < bestH {
+                    bestH = newHeuristicValue
+                    bestState = newState
+                    onBetterStateFound?(bestState)
+                }
+
+                if Task.isCancelled { return bestState }
+            }
         }
 
-        return bestState
+        return nil
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self.seed)
     }
 }

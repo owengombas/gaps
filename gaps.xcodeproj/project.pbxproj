@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5A0167B8297EC25B008433C1 /* Heuristic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0167B7297EC25B008433C1 /* Heuristic.swift */; };
 		5A07E2E82975536600827DC9 /* ChartUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A07E2E72975536600827DC9 /* ChartUI.swift */; };
 		5A0BBD1329009AA4008F4936 /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0BBD1229009AA4008F4936 /* Move.swift */; };
 		5A32134328FDC07900E15F89 /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A32134228FDC07900E15F89 /* Graph.swift */; };
@@ -45,6 +46,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5A0167B7297EC25B008433C1 /* Heuristic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Heuristic.swift; sourceTree = "<group>"; };
 		5A07E2E72975536600827DC9 /* ChartUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartUI.swift; sourceTree = "<group>"; };
 		5A0BBD1229009AA4008F4936 /* Move.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Move.swift; sourceTree = "<group>"; };
 		5A32134228FDC07900E15F89 /* Graph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graph.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 				5A32134228FDC07900E15F89 /* Graph.swift */,
 				5A0BBD1229009AA4008F4936 /* Move.swift */,
 				5A8220312906939500A17642 /* View.swift */,
+				5A0167B7297EC25B008433C1 /* Heuristic.swift */,
 			);
 			path = logic;
 			sourceTree = "<group>";
@@ -320,6 +323,7 @@
 				5AEC633728ED9B98001AEE3D /* CardSuit.swift in Sources */,
 				5AEC633528ED9B32001AEE3D /* Card.swift in Sources */,
 				5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */,
+				5A0167B8297EC25B008433C1 /* Heuristic.swift in Sources */,
 				5AEC633928ED9C64001AEE3D /* CardRank.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

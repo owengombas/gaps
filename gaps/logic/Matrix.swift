@@ -185,7 +185,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     /**
      Perform async map
      */
-    func map(cb: (Int, Int, T, Int) -> (T)) -> Matrix<T> {
+    func map(cb: (Int, Int, T, Int) -> T) -> Matrix<T> {
         let copy = self.copy()
         
         copy.forEach {i, j, v, c, m in
@@ -224,6 +224,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
      */
     func forEach(_ cb: (Int, Int, T, Int, Matrix<T>) -> ()) {
         var count = 0
+
         for j in 0 ..< self._rows {
             for i in 0 ..< self._columns {
                 cb(i, j, self.getElement(column: i, row: j), count, self)
