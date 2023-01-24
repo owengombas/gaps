@@ -11,14 +11,8 @@ import Foundation
  Represent a game state
  */
 class GameState: Matrix<Card?>, Hashable {
-    static func ==(lhs: GameState, rhs: GameState) -> Bool {
-        return lhs.isEquals(to: rhs)
-    }
-
-    @Published private var _moves: [Move] = []
     private var _removedCards: [Card] = []
     private var _parent: GameState? = nil
-
     private var _gScore: Int = 0
     private var _fScore: Int = 0
 
@@ -50,29 +44,9 @@ class GameState: Matrix<Card?>, Hashable {
         }
     }
 
-    /**
-     The gapses positions
-     */
-    var gaps: [(Int, Int)] {
-        get {
-            return self.findPositions(condition: { i, j, v, c in
-                return v == nil
-            })
-        }
-    }
-
     var maxRank: CardRank {
         get {
             return CardRank.init(rawValue: self.columns - 1)!
-        }
-    }
-
-    /**
-     Get the state's possibles moves
-     */
-    var moves: [Move] {
-        get {
-            return self._moves
         }
     }
 
@@ -90,7 +64,7 @@ class GameState: Matrix<Card?>, Hashable {
      */
     var isLeaf: Bool {
         get {
-            return self._moves.count <= 0
+            return self.getMoves().count <= 0
         }
     }
     
@@ -123,12 +97,6 @@ class GameState: Matrix<Card?>, Hashable {
         }
     }
 
-    var heuristicValue: Int {
-        get {
-            return Heuristic.score(state: self)
-        }
-    }
-
     convenience init() {
         self.init(columns: 13, rows: 4)
     }
@@ -144,6 +112,11 @@ class GameState: Matrix<Card?>, Hashable {
                     return Card.fromNumber(number: c, columns: m.columns, rows: m.rows)
                 }
         )
+    }
+    
+    init(seed: String) {
+        super.init(columns: 0, rows: 0, defaultValue: { _, _, _, _ in return nil })
+        let _ = self.loadSeed(seed: seed)
     }
 
     /**
@@ -165,11 +138,8 @@ class GameState: Matrix<Card?>, Hashable {
     func copy(from: GameState) {
         super.copy(from: from)
 
-        DispatchQueue.main.async {
-            self._removedCards = from.removedCards
-            self._moves = from.moves
-            self._parent = from.parent
-        }
+        self._removedCards = from.removedCards
+        self._parent = from.parent
     }
 
     /**
@@ -178,7 +148,6 @@ class GameState: Matrix<Card?>, Hashable {
     override func reset() {
         super.reset()
 
-        self._moves = []
         self._removedCards = []
     }
 
@@ -195,6 +164,15 @@ class GameState: Matrix<Card?>, Hashable {
         }
 
         return states
+    }
+    
+    /**
+     The gapses positions
+     */
+    func getGaps() -> [(Int, Int)] {
+        return self.findPositions(condition: { i, j, v, c in
+            return v == nil
+        })
     }
 
     /**
@@ -294,7 +272,7 @@ class GameState: Matrix<Card?>, Hashable {
     }
     
     func getMoves() -> [Move] {
-        let moves = gaps.reduce(into: []) { (moves: inout [Move], gap: (Int, Int)) in
+        let moves = self.getGaps().reduce(into: []) { (moves: inout [Move], gap: (Int, Int)) in
             // If the gap is at the begining of a row, then all aces can fill it
             if gap.0 <= 0 {
                 moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
@@ -347,15 +325,6 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     /**
-    Find all moves based on the game rules
-     */
-    func computeMoves() {
-        DispatchQueue.main.async {
-            self._moves = self.getMoves()
-        }
-    }
-
-    /**
      Verify if a move is performable, if the user can move the card and mutate the state, relying on the game rules
      */
     func verifyMove(move: Move) -> Bool {
@@ -394,13 +363,6 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     /**
-     Clear the moves
-     */
-    func clearMoves() {
-        self._moves = []
-    }
-
-    /**
      Apply a move and change the current state
      */
     func performMove(move: Move, verify: Bool = false) -> GameState {
@@ -411,7 +373,7 @@ class GameState: Matrix<Card?>, Hashable {
         }
 
         self.swap(posA: move.from, posB: move.to)
-        self.computeMoves()
+        
         return self
     }
 
@@ -419,7 +381,7 @@ class GameState: Matrix<Card?>, Hashable {
      Get the possible moves for a specified card (you have to perform computeMoves before)
      */
     func possibleMoves(card: Card) -> [Move] {
-        return self._moves.filter({ move in
+        return self.getMoves().filter({ move in
             return move.card.isEquals(to: card)
         })
     }
@@ -435,7 +397,7 @@ class GameState: Matrix<Card?>, Hashable {
      Get all the possible gaps where a card can be moved in (you have to perform computeMoves before)
      */
     func possibleGaps(card: Card) -> [Move] {
-        return self._moves.filter({ move in
+        return self.getMoves().filter({ move in
             return self.getElement(position: move.to)!.isEquals(to: card)
         })
     }
@@ -448,7 +410,7 @@ class GameState: Matrix<Card?>, Hashable {
             return false
         }
 
-        for move in self._moves {
+        for move in self.getMoves() {
             if !move.card.isEquals(to: card) {
                 continue
             }
@@ -548,7 +510,7 @@ class GameState: Matrix<Card?>, Hashable {
     /**
      Is the GameState equals to an another one
      */
-    func  isEquals(to: GameState?) -> Bool {
+    func isEquals(to: GameState?) -> Bool {
         if self.capacity != to?.capacity {
             return false
         }
@@ -655,6 +617,7 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     func aStar(
+            heuristic: (GameState) -> Int,
             onClosedAdded: ((Int) -> Void)? = nil,
             onBetterStateFound: ((GameState) -> Void)? = nil
     ) async -> GameState? {
@@ -662,7 +625,7 @@ class GameState: Matrix<Card?>, Hashable {
         var closed = Set<GameState>()
 
         let start = self
-        let heuristicValue = start.heuristicValue
+        let heuristicValue = heuristic(start)
         start._gScore = 0
         start._fScore = start._gScore + heuristicValue
         open.insert(start)
@@ -704,7 +667,7 @@ class GameState: Matrix<Card?>, Hashable {
                     continue
                 }
 
-                let newHeuristicValue = newState.heuristicValue
+                let newHeuristicValue = heuristic(newState)
                 newState.parent = state
                 newState._gScore = tentativeGScore
                 newState._fScore = newState._gScore + newHeuristicValue
@@ -724,5 +687,9 @@ class GameState: Matrix<Card?>, Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.seed)
+    }
+    
+    static func ==(lhs: GameState, rhs: GameState) -> Bool {
+        return lhs.isEquals(to: rhs)
     }
 }

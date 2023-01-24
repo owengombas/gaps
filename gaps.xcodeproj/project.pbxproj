@@ -13,6 +13,15 @@
 		5A32134328FDC07900E15F89 /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A32134228FDC07900E15F89 /* Graph.swift */; };
 		5A685269292D05BD007FA624 /* StateUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A685268292D05BD007FA624 /* StateUI.swift */; };
 		5A7EF0B32971A13800C42B5B /* Measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A7EF0B22971A13800C42B5B /* Measure.swift */; };
+		5A7FCE5829806FE000D042CC /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A7FCE5729806FE000D042CC /* main.swift */; };
+		5A7FCE5C29806FE800D042CC /* CardSuit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633628ED9B98001AEE3D /* CardSuit.swift */; };
+		5A7FCE5D29806FEB00D042CC /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633428ED9B32001AEE3D /* Card.swift */; };
+		5A7FCE5E29806FEE00D042CC /* CardRank.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633828ED9C64001AEE3D /* CardRank.swift */; };
+		5A7FCE5F29806FF000D042CC /* GameState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633A28ED9D66001AEE3D /* GameState.swift */; };
+		5A7FCE6029806FF200D042CC /* Matrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC633C28ED9DD9001AEE3D /* Matrix.swift */; };
+		5A7FCE6129806FF500D042CC /* Graph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A32134228FDC07900E15F89 /* Graph.swift */; };
+		5A7FCE6229806FF700D042CC /* Move.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0BBD1229009AA4008F4936 /* Move.swift */; };
+		5A7FCE6429806FFB00D042CC /* Heuristic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0167B7297EC25B008433C1 /* Heuristic.swift */; };
 		5A8220322906939500A17642 /* View.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8220312906939500A17642 /* View.swift */; };
 		5AEC630928ED85A4001AEE3D /* gapsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630828ED85A4001AEE3D /* gapsApp.swift */; };
 		5AEC630B28ED85A4001AEE3D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AEC630A28ED85A4001AEE3D /* ContentView.swift */; };
@@ -45,6 +54,18 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		5A7FCE5329806FE000D042CC /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		5A0167B7297EC25B008433C1 /* Heuristic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Heuristic.swift; sourceTree = "<group>"; };
 		5A07E2E72975536600827DC9 /* ChartUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartUI.swift; sourceTree = "<group>"; };
@@ -52,6 +73,8 @@
 		5A32134228FDC07900E15F89 /* Graph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Graph.swift; sourceTree = "<group>"; };
 		5A685268292D05BD007FA624 /* StateUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StateUI.swift; sourceTree = "<group>"; };
 		5A7EF0B22971A13800C42B5B /* Measure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Measure.swift; sourceTree = "<group>"; };
+		5A7FCE5529806FE000D042CC /* heuristics */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = heuristics; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A7FCE5729806FE000D042CC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5A8220312906939500A17642 /* View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = View.swift; sourceTree = "<group>"; };
 		5AEC630528ED85A4001AEE3D /* gaps.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = gaps.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5AEC630828ED85A4001AEE3D /* gapsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = gapsApp.swift; sourceTree = "<group>"; };
@@ -72,6 +95,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		5A7FCE5229806FE000D042CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5AEC630228ED85A4001AEE3D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -99,11 +129,20 @@
 		5A20F5AA292CEC1500627915 /* components */ = {
 			isa = PBXGroup;
 			children = (
+				5A8220312906939500A17642 /* View.swift */,
 				5A685268292D05BD007FA624 /* StateUI.swift */,
 				5A7EF0B22971A13800C42B5B /* Measure.swift */,
 				5A07E2E72975536600827DC9 /* ChartUI.swift */,
 			);
 			path = components;
+			sourceTree = "<group>";
+		};
+		5A7FCE5629806FE000D042CC /* heuristics */ = {
+			isa = PBXGroup;
+			children = (
+				5A7FCE5729806FE000D042CC /* main.swift */,
+			);
+			path = heuristics;
 			sourceTree = "<group>";
 		};
 		5AEC62FC28ED85A4001AEE3D = {
@@ -112,6 +151,7 @@
 				5AEC630728ED85A4001AEE3D /* gaps */,
 				5AEC631928ED85A5001AEE3D /* gapsTests */,
 				5AEC632328ED85A5001AEE3D /* gapsUITests */,
+				5A7FCE5629806FE000D042CC /* heuristics */,
 				5AEC630628ED85A4001AEE3D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -122,6 +162,7 @@
 				5AEC630528ED85A4001AEE3D /* gaps.app */,
 				5AEC631628ED85A5001AEE3D /* gapsTests.xctest */,
 				5AEC632028ED85A5001AEE3D /* gapsUITests.xctest */,
+				5A7FCE5529806FE000D042CC /* heuristics */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -175,7 +216,6 @@
 				5AEC633C28ED9DD9001AEE3D /* Matrix.swift */,
 				5A32134228FDC07900E15F89 /* Graph.swift */,
 				5A0BBD1229009AA4008F4936 /* Move.swift */,
-				5A8220312906939500A17642 /* View.swift */,
 				5A0167B7297EC25B008433C1 /* Heuristic.swift */,
 			);
 			path = logic;
@@ -184,6 +224,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5A7FCE5429806FE000D042CC /* heuristics */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A7FCE5B29806FE000D042CC /* Build configuration list for PBXNativeTarget "heuristics" */;
+			buildPhases = (
+				5A7FCE5129806FE000D042CC /* Sources */,
+				5A7FCE5229806FE000D042CC /* Frameworks */,
+				5A7FCE5329806FE000D042CC /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = heuristics;
+			productName = heuristics;
+			productReference = 5A7FCE5529806FE000D042CC /* heuristics */;
+			productType = "com.apple.product-type.tool";
+		};
 		5AEC630428ED85A4001AEE3D /* gaps */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5AEC632A28ED85A5001AEE3D /* Build configuration list for PBXNativeTarget "gaps" */;
@@ -244,9 +301,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1400;
+				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1410;
 				TargetAttributes = {
+					5A7FCE5429806FE000D042CC = {
+						CreatedOnToolsVersion = 14.2;
+					};
 					5AEC630428ED85A4001AEE3D = {
 						CreatedOnToolsVersion = 14.0.1;
 					};
@@ -276,6 +336,7 @@
 				5AEC630428ED85A4001AEE3D /* gaps */,
 				5AEC631528ED85A5001AEE3D /* gapsTests */,
 				5AEC631F28ED85A5001AEE3D /* gapsUITests */,
+				5A7FCE5429806FE000D042CC /* heuristics */,
 			);
 		};
 /* End PBXProject section */
@@ -307,6 +368,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5A7FCE5129806FE000D042CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A7FCE5C29806FE800D042CC /* CardSuit.swift in Sources */,
+				5A7FCE5D29806FEB00D042CC /* Card.swift in Sources */,
+				5A7FCE6129806FF500D042CC /* Graph.swift in Sources */,
+				5A7FCE6029806FF200D042CC /* Matrix.swift in Sources */,
+				5A7FCE6229806FF700D042CC /* Move.swift in Sources */,
+				5A7FCE6429806FFB00D042CC /* Heuristic.swift in Sources */,
+				5A7FCE5F29806FF000D042CC /* GameState.swift in Sources */,
+				5A7FCE5829806FE000D042CC /* main.swift in Sources */,
+				5A7FCE5E29806FEE00D042CC /* CardRank.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5AEC630128ED85A4001AEE3D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -361,6 +438,32 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		5A7FCE5929806FE000D042CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BCW7TF5B5M;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		5A7FCE5A29806FE000D042CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BCW7TF5B5M;
+				ENABLE_HARDENED_RUNTIME = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		5AEC632828ED85A5001AEE3D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -657,6 +760,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5A7FCE5B29806FE000D042CC /* Build configuration list for PBXNativeTarget "heuristics" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A7FCE5929806FE000D042CC /* Debug */,
+				5A7FCE5A29806FE000D042CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5AEC630028ED85A4001AEE3D /* Build configuration list for PBXProject "gaps" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

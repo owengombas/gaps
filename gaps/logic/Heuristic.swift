@@ -8,24 +8,6 @@
 import Foundation
 
 class Heuristic {
-    static let calculation = [
-        (0, Heuristic.columnPlacement),
-        (1, Heuristic.countMisplacedCards),
-        (0, Heuristic.columnPlacement)
-    ]
-
-    // region Heuristic functions
-
-    static func score(state: GameState) -> Int {
-        var score = 0
-
-        for (weight, heuristic) in Heuristic.calculation {
-            score += weight * heuristic(state)
-        }
-
-        return score
-    }
-
     static func countMisplacedCards(state: GameState) -> Int {
         return state.countMisplacedCards()
     }
@@ -45,10 +27,20 @@ class Heuristic {
     }
 
     static func columnPlacement(state: GameState) -> Int {
-        var columnPlacement = 0
+        let columnPlacement = 0
 
         return columnPlacement
     }
 
-    // endregion
+    static func compose(_ weightsWithHeuristics: (Int, (GameState) -> Int)...) -> (GameState) -> Int {
+        return { state in
+            var score = 0
+
+            for (weight, heuristic) in weightsWithHeuristics {
+                score += weight * heuristic(state)
+            }
+
+            return score
+        }
+    }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct StateUI: View {
     @StateObject var state: GameState
+    @Binding var cards: [[Card?]]
     @Binding var selected: Card?
     @Binding var peformMovesSafely: Bool
     @Binding var blockMove: Bool
@@ -32,6 +33,8 @@ struct StateUI: View {
         } else if self.selected === card {
             self.selected = nil
         }
+        
+        self.cards = self.state.values
     }
     
     func onGapTap(index: Int) {
@@ -47,18 +50,32 @@ struct StateUI: View {
         let m = Move(card: self.selected!, to: pos, state: self.state, parentState: self.state)
         
         let _ = self.state.performMove(move: m, verify: self.peformMovesSafely)
-        self.state.computeMoves()
         
         self.onCardChange?(self._selected.wrappedValue!, pos)
         
         self.selected = nil
+        
+        self.cards = self.state.values
+    }
+    
+    func stateToUIArray() -> [Card?] {
+        var arr: [Card?] = []
+        
+        if self.cards.count <= 0 {
+            return []
+        }
+        
+        self.state.forEachTopBottom { i, j, v, c, m in
+            arr.insert(self.cards[j][i], at: c)
+        }
+
+        return arr
     }
     
     var body: some View {
         VStack {
             VStack(spacing: 2) {
                 Text("Misplaced cards: \(self.state.countMisplacedCards())").font(.system(size: 20)).bold()
-                Text("Heuristic value: \(self.state.heuristicValue)").font(.system(size: 20)).bold()
                 
                 if self.state.isSolved {
                     Text("Solved").font(.system(size: 10)).bold()
@@ -69,7 +86,7 @@ struct StateUI: View {
             
             Group {
                 LazyHGrid(rows: Array(repeating: GridItem(.flexible()), count: self.state.rows)) {
-                    ForEach(Array(self.state.toArray(fromTopToBottom: true).enumerated()), id: \.offset) {index, card in
+                    ForEach(Array(stateToUIArray().enumerated()), id: \.offset) {index, card in
                         Group {
                             if card != nil {
                                 // A Card

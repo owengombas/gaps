@@ -9,10 +9,17 @@ import SwiftUI
 import Charts
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState(columns: 10, rows: 4)
-    @StateObject private var _bestState: GameState = GameState()
-    @StateObject private var _tempBestState: GameState = GameState()
+    private let h = Heuristic.compose((1, Heuristic.countMisplacedCards))
 
+    @StateObject private var _state: GameState = GameState(columns: 10, rows: 4)
+    @State private var _stateCards: [[Card?]] = []
+    @State private var _moves: [Move] = []
+    
+    @StateObject private var _bestState: GameState = GameState()
+    @State private var _bestStateCards: [[Card?]] = []
+    
+    @StateObject private var _tempBestState: GameState = GameState()
+    
     @State private var _stateScore: Int = 0
     @State private var _peformMovesSafely: Bool = false
     @State private var _gaps: Int = 4
@@ -30,40 +37,61 @@ struct ContentView: View {
     @State private var _closedNodesOverTimePerAlgorithms: [Measure] = []
     @State private var _betterStateFoundOverTime: [Measure] = []
     
+    func publishState() {
+        self._stateCards = self._state.values
+        self._moves = self._state.getMoves()
+    }
+    
+    func publishBestState() {
+        self._bestStateCards = self._bestState.values
+    }
+    
+    func copyStateToBestState() {
+        self._bestState.copy(from: self._state)
+        self.publishBestState()
+    }
+    
+    func publishEverything() {
+        self.publishState()
+        self.copyStateToBestState()
+    }
+    
+    func onAppear() {
+        self.publishEverything()
+    }
+
     func generateNewGame() {
         self._selected = nil
         self._state.refresh()
         self._state.shuffle()
         self.removeLasts()
-        self._state.computeMoves()
-        self._bestState.copy(from: self._state)
+        self.publishEverything()
     }
     
     func reset() {
         self._selected = nil
         self._state.reset()
-        self._state.computeMoves()
         self._bestState.copy(from: self._state)
+        self.publishEverything()
     }
     
     func shuffle() {
         self._selected = nil
         self._state.shuffle()
-        self._state.computeMoves()
         self._bestState.copy(from: self._state)
+        self.publishEverything()
     }
     
     func removeLasts() {
         self._selected = nil
         self._state.remove(CardRank(rawValue: self._state.columns - 1)!)
-        self._state.computeMoves()
         self._bestState.copy(from: self._state)
+        self.publishEverything()
     }
     
     func copyBestStateToMainGame() {
         self._selected = nil
-        self._state.copy(from: self._bestState)
-        self._state.computeMoves()
+        self.publishEverything()
     }
     
     func wait(seconds: Double) async {
@@ -87,9 +115,10 @@ struct ContentView: View {
             }
 
             self._bestState.copy(from: state)
+            self.publishBestState()
+            
             await wait(seconds: seconds)
         }
-        self._state.computeMoves()
 
         self._performingAnimation = false
     }
@@ -97,6 +126,8 @@ struct ContentView: View {
     func cancelAnimation() {
         self._bestState.copy(from: self._tempBestState)
         self._performingAnimation = false
+        
+        self.publishBestState()
     }
     
     func perform(
@@ -115,13 +146,14 @@ struct ContentView: View {
         
         self._performingAlgorithm = true
         self._bestState.copy(from: self._state)
+        self.publishBestState()
         
         self.writeLog(logs: "Performing algorithm \(name)", lineReturn: false)
 
         self._time = 0.0
         let misplacedCards = self._state.countMisplacedCards()
         self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
-        self._timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in self._time += 0.01 }
+        self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in Task { self._time += 0.1 } }
 
         self._betterStateFoundOverTime.removeAll(where: { $0.z == name })
         self._closedNodesOverTimePerAlgorithms.removeAll(where: { $0.z == name })
@@ -135,39 +167,39 @@ struct ContentView: View {
 
             return false
         }
+        
+        var lastT = self._time
+        var closedNodesCount = 0
+        
+        let onClosedAdded: (Int) -> Void = { closedCount in
+            let nodeInterval = 1000
+            if closedCount % nodeInterval == 0 {
+                var dT = self._time - lastT
+                if dT == 0 {
+                    dT = 1
+                }
+                
+                self.writeLog(logs: "Visited \(closedCount)")
+                
+                let nodesPerSeconds = Double(nodeInterval) / dT
+                
+                self.writeLog(logs: "(\(String(format: "%.2f", nodesPerSeconds)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
+                
+                self._closedNodesOverTimePerAlgorithms.append(Measure(x: Double(closedCount), y: dT, z: name))
+                
+                lastT = self._time
+            }
+            closedNodesCount = closedCount
+        }
+        
+        let onBetterStateFound: (GameState) -> Void = { state in
+            let misplacedCards = state.countMisplacedCards()
+            self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards")
+            self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
+            self._tempBestState.copy(from: state)
+        }
 
         self._algorithmTask = Task {
-            var lastT = self._time
-            var closedNodesCount = 0
-            
-            let onClosedAdded: (Int) -> Void = { closedCount in
-                let nodeInterval = 25
-                if closedCount % nodeInterval == 0 {
-                    var dT = self._time - lastT
-                    if dT == 0 {
-                        dT = 1
-                    }
-                    
-                    self.writeLog(logs: "Visited \(closedCount)")
-                    
-                    let nodesPerSeconds = Double(nodeInterval) / dT
-                    
-                    self.writeLog(logs: "(\(String(format: "%.2f", nodesPerSeconds)) nodes/s for the last \(nodeInterval) nodes)", lineReturn: false)
-                    
-                    self._closedNodesOverTimePerAlgorithms.append(Measure(x: Double(closedCount), y: dT, z: name))
-                    
-                    lastT = self._time
-                }
-                closedNodesCount = closedCount
-            }
-            
-            let onBetterStateFound: (GameState) -> Void = { state in
-                let misplacedCards = state.countMisplacedCards()
-                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards")
-                self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
-                self._tempBestState.copy(from: state)
-            }
-
             if checkCancelledTask() { return }
             
             let result = await algorithm(onClosedAdded, onBetterStateFound)
@@ -222,9 +254,8 @@ struct ContentView: View {
         } else {
             self.writeLog(logs: "No better state found during the execution", lineReturn: true)
         }
+        
         self._timer?.invalidate()
-
-        // await wait(seconds: 1)
 
         await self.showBestStateAnimation(bestStatePath: self._tempBestState.rewind(), seconds: 0.25)
     }
@@ -238,6 +269,8 @@ struct ContentView: View {
         self._gaps = self._state.rows
         self.reset()
         self._bestState.copy(from: self._state)
+        
+        self.publishEverything()
     }
     
     func changeColumns(_ nb: Int) {
@@ -248,6 +281,8 @@ struct ContentView: View {
         self._state.columns += nb
         self.reset()
         self._bestState.copy(from: self._state)
+        
+        self.publishEverything()
     }
     
     func changeGaps(_ nb: Int) {
@@ -257,14 +292,20 @@ struct ContentView: View {
         
         self._gaps += nb
         self._bestState.copy(from: self._state)
+        
+        self.publishEverything()
     }
     
     func onCardChangeMain(card: Card, to: (Int, Int)) {
         self._bestState.copy(from: self._state)
+        
+        self.publishEverything()
     }
     
     func onCardChangeAlgorithm(card: Card, to: (Int, Int)) {
         self._state.copy(from: self._bestState)
+        
+        self.publishEverything()
     }
     
     func writeLog(logs: Any..., lineReturn: Bool = true) {
@@ -290,7 +331,7 @@ struct ContentView: View {
     func onbetterStateFound(betterState: GameState, count: Int) -> Void {
         let t = self._time
         let percentage = Double(count) / Double(self._maxClosed) * 100
-        self.writeLog(logs: "\(String(format: "%.3f", percentage))%) Found a better state in \(String(format: "%.2f", t)) seconds with score \(betterState.countMisplacedCards) (\(count) node closed)", lineReturn: true)
+        self.writeLog(logs: "\(String(format: "%.3f", percentage))%) Found a better state in \(String(format: "%.2f", t)) seconds with score \(String(describing: betterState.countMisplacedCards)) (\(count) node closed)", lineReturn: true)
         self._tempBestState.copy(from: betterState)
     }
     
@@ -305,12 +346,13 @@ struct ContentView: View {
         
         if isOkay {
             self._bestState.copy(from: self._state)
-            self._state.computeMoves()
         } else {
             self.writeLog()
             self.writeLog(logs: "Wrong seed format", lineReturn: false)
             self.scroll(to: "algorithm")
         }
+        
+        self.publishEverything()
     }
     
     var body: some View {
@@ -323,6 +365,7 @@ struct ContentView: View {
                             
                             StateUI(
                                 state: self._state,
+                                cards: self.$_stateCards,
                                 selected: self.$_selected,
                                 peformMovesSafely: self.$_peformMovesSafely,
                                 blockMove: self.$_performingAlgorithm,
@@ -372,7 +415,12 @@ struct ContentView: View {
                                     }
                                     
                                     Button("Perform A*") {
-                                        self.perform(name: "A*", algorithm: self._bestState.aStar, heuristicName: "Misplaced cards")
+                                        self.perform(
+                                                name: "A*",
+                                                algorithm: { (onClosedAdded: ((Int) -> Void)?, onBetterStateFound: ((GameState) -> Void)?) in
+                                                    return await self._bestState.aStar(heuristic: self.h, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound)
+                                                }, heuristicName: "Misplaced cards"
+                                        )
                                     }
                                 }.disabled(self._performingAlgorithm)
                             }
@@ -381,7 +429,7 @@ struct ContentView: View {
                                 Spacer(minLength: 10)
                                 
                                 VStack {
-                                    Text("\(self._state.moves.count) Children states found").bold()
+                                    Text("\(self._moves.count) Children states found").bold()
                                     
                                     if self._viewChildren {
                                         Button("Hide children states") {
@@ -391,10 +439,11 @@ struct ContentView: View {
                                         Spacer(minLength: 50)
                                         
                                         VStack(spacing: 50) {
-                                            ForEach(self._state.moves, id: \.state.description) { move in
+                                            ForEach(self._moves, id: \.state.description) { move in
                                                 VStack {
                                                     StateUI(
-                                                        state: self._state.copy().performMove(move: move),
+                                                        state: move.state,
+                                                        cards: Binding.constant(move.state.values),
                                                         selected: Binding.constant(nil),
                                                         peformMovesSafely: Binding.constant(false),
                                                         blockMove: Binding.constant(true),
@@ -426,6 +475,7 @@ struct ContentView: View {
                         
                         StateUI(
                             state: self._bestState,
+                            cards: self.$_bestStateCards,
                             selected: self.$_selected,
                             peformMovesSafely: self.$_peformMovesSafely,
                             blockMove: self.$_performingAlgorithm,
@@ -505,9 +555,7 @@ struct ContentView: View {
                     self._scroll = scroll
                 }
             }
-        }.onAppear {
-            self._bestState.copy(from: self._state)
-        }
+        }.onAppear(perform: self.onAppear)
         .frame(height: 800)
     }
 }
