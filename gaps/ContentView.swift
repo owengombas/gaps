@@ -79,6 +79,7 @@ struct ContentView: View {
     func showBestStateAnimation(bestStatePath: [GameState], seconds: Double) async {
         self._performingAnimation = true
 
+        await wait(seconds: 1)
         for state in bestStatePath {
             if !self._performingAnimation {
                 cancelAnimation()
@@ -94,7 +95,7 @@ struct ContentView: View {
     }
 
     func cancelAnimation() {
-        self._bestState.copy(from: self._state)
+        self._bestState.copy(from: self._tempBestState)
         self._performingAnimation = false
     }
     
@@ -120,11 +121,14 @@ struct ContentView: View {
         self._time = 0.0
         let misplacedCards = self._state.countMisplacedCards()
         self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
-        self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
+        self._timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in self._time += 0.01 }
+
+        self._betterStateFoundOverTime.removeAll(where: { $0.z == name })
+        self._closedNodesOverTimePerAlgorithms.removeAll(where: { $0.z == name })
 
         let checkCancelledTask = {
             if self._algorithmTask!.isCancelled {
-                self._performingAnimation = false
+                self._performingAnimation = true
                 self._performingAlgorithm = false
                 return true
             }
@@ -167,6 +171,8 @@ struct ContentView: View {
             if checkCancelledTask() { return }
             
             let result = await algorithm(onClosedAdded, onBetterStateFound)
+            self._performingAnimation = true
+            self._performingAlgorithm = false
 
             if checkCancelledTask() { return }
             
@@ -191,11 +197,6 @@ struct ContentView: View {
             
             self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds (with performance: \(nodesPerSecondes) nodes/s) and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
 
-            await wait(seconds: 1)
-
-            self._performingAnimation = true
-            self._performingAlgorithm = false
-
             if checkCancelledTask() { return }
 
             await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.25)
@@ -212,8 +213,8 @@ struct ContentView: View {
         }
         
         self._algorithmTask?.cancel()
-        self._performingAnimation = true
         self._performingAlgorithm = false
+
         self.writeLog(logs: "Task canceled after \(String(format: "%.2f", self._time)) seconds")
         
         if !self._tempBestState.isEquals(to: self._bestState) {
@@ -222,7 +223,8 @@ struct ContentView: View {
             self.writeLog(logs: "No better state found during the execution", lineReturn: true)
         }
         self._timer?.invalidate()
-        await wait(seconds: 1)
+
+        // await wait(seconds: 1)
 
         await self.showBestStateAnimation(bestStatePath: self._tempBestState.rewind(), seconds: 0.25)
     }
