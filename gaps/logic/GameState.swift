@@ -30,8 +30,10 @@ class GameState: Matrix<Card?>, Hashable {
 
             var seed: String = padding(self.rows) + padding(self.columns)
 
-            seed += self.values.reduce(into: "") { str, row in
-                str += row.reduce(into: "") { str, card in
+            for i in 0 ..< self.rows {
+                for j in 0 ..< self.columns {
+                    let card = self.getElement(column: j, row: i)
+
                     var strRep = ""
 
                     if card === nil {
@@ -586,7 +588,7 @@ class GameState: Matrix<Card?>, Hashable {
             if Task.isCancelled { return bestState }
 
             let checkBetterScore = { (state: GameState) in
-                let stateScore = self.countMisplacedCards()
+                let stateScore = state.countMisplacedCards()
 
                 if stateScore < bestScore {
                     bestScore = stateScore
@@ -637,7 +639,7 @@ class GameState: Matrix<Card?>, Hashable {
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
-        }, onClosedAdded: onClosedAdded)
+        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound)
     }
 
     /**
@@ -649,7 +651,7 @@ class GameState: Matrix<Card?>, Hashable {
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
-        }, onClosedAdded: onClosedAdded)
+        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound)
     }
 
     func aStar(

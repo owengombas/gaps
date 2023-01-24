@@ -9,7 +9,7 @@ import SwiftUI
 import Charts
 
 struct ContentView: View {
-    @StateObject private var _state: GameState = GameState(columns: 5, rows: 4)
+    @StateObject private var _state: GameState = GameState(columns: 10, rows: 4)
     @StateObject private var _bestState: GameState = GameState()
     @StateObject private var _tempBestState: GameState = GameState()
 
@@ -24,12 +24,11 @@ struct ContentView: View {
     @State private var _algorithmTask: Task<Void, Error>? = nil
     @State private var _timer: Timer? = nil
     @State private var _time: Double = 0
-    @State var _seed: String = ""
-    @State var _scroll: ScrollViewProxy? = nil
-    @State var _viewChildren: Bool = false
-    @State var _closedNodesOverTimePerAlgorithms: [Measure] = []
-    @State var _closedNodesOverTimePerHeuristics: [Measure] = []
-    @State var _betterStateFoundOverTime: [Measure] = []
+    @State private var _seed: String = ""
+    @State private var _scroll: ScrollViewProxy? = nil
+    @State private var _viewChildren: Bool = false
+    @State private var _closedNodesOverTimePerAlgorithms: [Measure] = []
+    @State private var _betterStateFoundOverTime: [Measure] = []
     
     func generateNewGame() {
         self._selected = nil
@@ -78,11 +77,25 @@ struct ContentView: View {
     }
     
     func showBestStateAnimation(bestStatePath: [GameState], seconds: Double) async {
+        self._performingAnimation = true
+
         for state in bestStatePath {
+            if !self._performingAnimation {
+                cancelAnimation()
+                return
+            }
+
             self._bestState.copy(from: state)
             await wait(seconds: seconds)
         }
         self._state.computeMoves()
+
+        self._performingAnimation = false
+    }
+
+    func cancelAnimation() {
+        self._bestState.copy(from: self._state)
+        self._performingAnimation = false
     }
     
     func perform(
@@ -108,7 +121,17 @@ struct ContentView: View {
         let misplacedCards = self._state.countMisplacedCards()
         self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
         self._timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in self._time += 0.1 }
-        
+
+        let checkCancelledTask = {
+            if self._algorithmTask!.isCancelled {
+                self._performingAnimation = false
+                self._performingAlgorithm = false
+                return true
+            }
+
+            return false
+        }
+
         self._algorithmTask = Task {
             var lastT = self._time
             var closedNodesCount = 0
@@ -129,10 +152,6 @@ struct ContentView: View {
                     
                     self._closedNodesOverTimePerAlgorithms.append(Measure(x: Double(closedCount), y: dT, z: name))
                     
-                    if heuristicName != nil {
-                        self._closedNodesOverTimePerHeuristics.append(Measure(x: Double(closedCount), y: dT, z: heuristicName!))
-                    }
-                    
                     lastT = self._time
                 }
                 closedNodesCount = closedCount
@@ -144,8 +163,12 @@ struct ContentView: View {
                 self._betterStateFoundOverTime.append(Measure(x: self._time, y: Double(misplacedCards), z: name))
                 self._tempBestState.copy(from: state)
             }
+
+            if checkCancelledTask() { return }
             
             let result = await algorithm(onClosedAdded, onBetterStateFound)
+
+            if checkCancelledTask() { return }
             
             let nodesPerSecondes = Int(Double(closedNodesCount) / (self._time == 0 ? 1 : self._time))
             
@@ -160,17 +183,24 @@ struct ContentView: View {
             if result!.countMisplacedCards() > 0 {
                 self.writeLog(logs: "The game couldn't be fully solved, showing the best solution found...", lineReturn: true)
             }
-            
+
+
+            if checkCancelledTask() { return }
+
             let bestStatePath = result!.rewind()
             
             self.writeLog(logs: "Algorithm performed in \(String(format: "%.2f", self._time)) seconds (with performance: \(nodesPerSecondes) nodes/s) and found a path of \(bestStatePath.count) states, rewinding...", lineReturn: true)
-            self._performingAlgorithm = false
-            
+
             await wait(seconds: 1)
-            
+
             self._performingAnimation = true
+            self._performingAlgorithm = false
+
+            if checkCancelledTask() { return }
+
             await self.showBestStateAnimation(bestStatePath: bestStatePath, seconds: 0.25)
-            self._performingAnimation = false
+
+            if checkCancelledTask() { return }
             
             self.writeLog(logs: "Rewinding performed, here is the best state found...", lineReturn: true)
         }
@@ -182,6 +212,7 @@ struct ContentView: View {
         }
         
         self._algorithmTask?.cancel()
+        self._performingAnimation = true
         self._performingAlgorithm = false
         self.writeLog(logs: "Task canceled after \(String(format: "%.2f", self._time)) seconds")
         
@@ -191,12 +222,9 @@ struct ContentView: View {
             self.writeLog(logs: "No better state found during the execution", lineReturn: true)
         }
         self._timer?.invalidate()
-        
         await wait(seconds: 1)
-        
-        self._performingAnimation = true
+
         await self.showBestStateAnimation(bestStatePath: self._tempBestState.rewind(), seconds: 0.25)
-        self._performingAnimation = false
     }
     
     func changeRows(_ nb: Int) {
@@ -414,12 +442,20 @@ struct ContentView: View {
                                 Task {
                                    await self.interruptCurrentTask()
                                 }
-                            }.disabled(!self._performingAlgorithm)
-                        } else {
+                            }
+                        }
+
+                        if self._performingAnimation {
+                            Button("Stop animation") {
+                                self._performingAnimation = false
+                            }
+                        }
+
+                        if !self._performingAlgorithm  && !self._performingAnimation {
                             Button("Apply to main game") {
                                 self.scroll(to: "title")
                                 self.copyBestStateToMainGame()
-                            }.disabled(self._performingAlgorithm)
+                            }
                         }
                         
                         Spacer(minLength: 50)
@@ -439,6 +475,18 @@ struct ContentView: View {
                     if #available(macOS 13.0, *) {
                         VStack(spacing: 100) {
                             ChartUI(
+                                    values: self.$_betterStateFoundOverTime,
+                                    title: Binding.constant("Better score on state found per algorithms"),
+                                    xTitle: Binding.constant("Time (s)"),
+                                    yTitle: Binding.constant("State score"),
+                                    colorTitle: Binding.constant("Algorithm"),
+                                    colorsTitles: Binding.constant([
+                                        "A*": .green, "DFS": .pink, "BFS": .orange
+                                    ]),
+                                    showIfNotEmpty: Binding.constant(true)
+                            )
+
+                            ChartUI(
                                 values: self.$_closedNodesOverTimePerAlgorithms,
                                 title: Binding.constant("Closed nodes over time per algorithms"),
                                 xTitle: Binding.constant("Closed nodes"),
@@ -446,30 +494,6 @@ struct ContentView: View {
                                 colorTitle: Binding.constant("Algorithm"),
                                 colorsTitles: Binding.constant([
                                     "A*": .green, "DFS": .pink, "BFS": .orange
-                                ]),
-                                showIfNotEmpty: Binding.constant(true)
-                            )
-                            
-                            ChartUI(
-                                values: self.$_betterStateFoundOverTime,
-                                title: Binding.constant("Better score on state found per algorithms"),
-                                xTitle: Binding.constant("Time (s)"),
-                                yTitle: Binding.constant("State score"),
-                                colorTitle: Binding.constant("Algorithm"),
-                                colorsTitles: Binding.constant([
-                                    "A*": .green, "DFS": .pink, "BFS": .orange
-                                ]),
-                                showIfNotEmpty: Binding.constant(true)
-                            )
-                            
-                            ChartUI(
-                                values: self.$_closedNodesOverTimePerHeuristics,
-                                title: Binding.constant("Closed nodes over time per heuristics (on A*)"),
-                                xTitle: Binding.constant("Closed nodes"),
-                                yTitle: Binding.constant("Time (s)"),
-                                colorTitle: Binding.constant("Heuristic"),
-                                colorsTitles: Binding.constant([
-                                    "Misplaced cards": .cyan
                                 ]),
                                 showIfNotEmpty: Binding.constant(true)
                             )
