@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "ContentView.publishState():ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._state.getMoves()">
+            </PersistentString>
+            <PersistentString
+               value = "self._moves">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.rewind():GameState.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in ContentView.perform(name:algorithm:):ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._bestStatePath">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.computeMoves():GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.moves.count">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.loadSeed(seed:):GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "Card.fromNumber(number: Int(value)!, columns: self.columns, rows: self.rows)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.aStarSearch():GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.moves">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.generalizedSearch(insert:):GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "s">
+            </PersistentString>
+            <PersistentString
+               value = "self.seed">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Matrix.getPublishedElement(column:row:):Matrix.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "publishedValues">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "State.removeRandomly():State.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "0..&lt;self._lines">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "State.computeMoves():State.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._moves">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Card.number.getter:Card.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._cardColor.rawValue">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "GameState.isAPossibleGap(card:gap:):GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._moves">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ContentView.showBestStateAnimation(sleepTime:):ContentView.swift">
+      </ContextState>
+      <ContextState
+         contextName = "static Card.fromNumber(number:):Card.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "CardColors.allCases">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "State.init():State.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ContentView.cancelAnimation():ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self._tempBestState">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "static Card.fromNumber(number:columns:rows:):Card.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "number / columns">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "ContentView.getPositionFromHGridIndex(index:):ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.state.lines">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Matrix.swap(i1:i2:j1:j2:):Matrix.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "getElement(i:j1, j:j2)">
+            </PersistentString>
+            <PersistentString
+               value = "_repr[j1][j2]">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "Matrix.getElement(i:j:):Matrix.swift">
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>
