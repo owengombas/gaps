@@ -1,3 +1,61 @@
-\chapter{Heuristics}
+\chapter{Heuristiques}
 
 \section{Méthodologie}
+J'ai choisis de mettre faire en sorte que l'heuristique avec la valeur la plus basse représente un état le plus près de la solution. Dans cette logique j'ai alors implémentées trois heuristiques (détaillées dans les sections suivantes) et de les combiner pour obtenir une heuristique finale. Pour cela j'ai utilisé la méthode de la moyenne pondérée. Pour chaque heuristique j'ai déterminé un poids qui représente l'importance de l'heuristique dans la recherche de la solution. Pour déterminer ces poids j'ai créer une fonction dans la classe \texttt{Statistics} qui met en competition les heuristiques entre elles. Cette fonction prend en paramètre un nombre de parties à jouer et retourne un tableau de poids. Pour chaque partie, elle joue avec les trois heuristiques et enregistre le nombre de cartes mal placées de chaque heuristique. Elle trie ensuite ce tableau et retourne un tableau de poids où le poids de l'heuristique qui a le moins de cartes mal placées est en premier. Cette méthode permet de déterminer quelles heuristiques sont les plus efficaces et de les mettre en avant dans la recherche de la solution.
+
+\section{Heuristique 1 - Nombre de cartes mal placées}
+Cette heuristique renvoit le nombre de cartes mal placées. Relativement à l'as en début de ligne. C'est à dire que la couleur de l'as en début de ligne détermine la couleur de la ligne. Si une carte n'est pas de la même couleur que l'as en début de ligne alors elle est mal placée. Cette heuristique est relativement simple à implémenter et donne de bons résultats. Elle est donc utilisée comme heuristique de base.
+
+\pagebreak
+
+\section{Heuristique 2 - Nombre de cartes mal placées relatif à la colonne}
+Cette heuristique renvoit le nombre de cartes mal placées relativement à la colonne. Contrairement à la première heuristique, ici on ne prend pas en compte la couleur déterminée de la ligne. Elle regarde donc si la carte est bien placée dans sa colonne. Par exemple un 10, peu importe sa couleur, est mal placé si il est placé s'il est à la colonne 9 ou 11 alors, il devrait être à la colonne 10.
+
+\section{Heuristique 3 - Nombre de gap bloqués}
+Cette heuristique renvoit le nombre de gap bloqués.
+A noté qu'il y'a deux types de gaps bloqués:
+
+\begin{itemize}
+    \item Un gap est bloqué par un autre gap qui le précède.
+    \item Un gap est bloqué s'il suit la carte de rang maximal du jeu (par exemple une reine dans la configuration 13x4).
+\end{itemize}
+
+Elle prend alors deux paramètres (\texttt{stuckByMaxRankWeight} et \texttt{stuckByGapWeight}), qui sont les poids des deux types de gaps bloqués. Ces deux paramètres multiplient le nombre de gap bloqués par leur poids respectif.
+
+La function de cette heuristique s'utilise diffemment des autres dû aux deux paramètres. Pour être utilisée il faut l'appeler avec les poids, pour obtenir la fonction finale.
+\begin{lstlisting}
+    let heuristic = Heuristic.stuckGaps(
+        stuckByMaxRankWeight = 10,
+        stuckByGapWeight = 1
+    )
+\end{lstlisting}
+
+\pagebreak
+
+\section{Résultats}
+En utilisant la configuration suivantes:
+\begin{lstlisting}
+let heuristics = [
+    Heuristic.countMisplacedCards,
+    Heuristic.stuckGaps(),
+    Heuristic.wrongColumnPlacement
+]
+
+let bestWeights = await Statistics.findBestWeights(
+    games: Statistics.generateGames(n: 5, rows: 4, columns: 13),
+    range: 0...5,
+    heuristics: heuristics,
+    maxClosed: 3000
+)
+\end{lstlisting}
+
+J'ai obtenue les poids suivants:
+\begin{itemize}
+    \item Heuristique 1: 5
+    \item Heuristique 2: 1
+    \item Heuristique 3: 4
+\end{itemize}
+
+Ces résultats ne représentent pas forcément les meilleurs poids. Ils sont simplement le résultat de l'observation que j'ai fait sur les résultats de la fonction \texttt{findBestWeights} que je n'ai pas pu complétement éxecuter à cause de sa complexité.
+
+Cela signifie que l'heuristique 1 est la plus importante, l'heuristique 2 est la moins importante et l'heuristique 3 est la deuxième plus importante. Ces poids sont donc utilisés pour l'application finale. Et peuvent être modifiés via le code dans le fichier \texttt{ContentView.swift} par la variable \texttt{\_h}.
