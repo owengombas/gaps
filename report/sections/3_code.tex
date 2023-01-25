@@ -1,0 +1,64 @@
+\chapter{Code}
+
+\section{UI}
+Le code principal de l'interface graphique se trouve dans le fichier \texttt{ContentView.swift}. Elle permet d'afficher une configuration de jeu et d'intéragir avec. On peut déplacer les cartes en cliquant dessus, et en les déplacer vers un espace vide. Lorsqu'on execute un des algorithmes, on peut consulter les logs de l'exécution dans un espace dédié, et voir le déroulement de l'algorithme dans l'interface graphique une fois que celui-ci est terminé.
+
+L'interface est composée des composants "custom" suivants:
+\begin{itemize}
+      \item \texttt{StateUI} \\
+            Affiche le plateau de jeu et permet d'interagir avec celui-ci.
+      \item \texttt{ChartUI} et \texttt{Measure} \\
+            Affiche un graphique représentant divers statistiques.
+\end{itemize}
+
+\section{GameState.swift}
+Cette classe représente l'état du jeu. Elle nous permet de stocker les cartes. Elle permet aussi de déplacer les cartes, de vérifier si le jeu est terminé, de générer les coups possibles, et d'effectuer toutes les opérations permettant l'intéraction avec le jeu.
+
+La structures de données utilisées pour représenter le jeu est une matrice de \texttt{Card} (voir \texttt{Card.swift}). Les cartes sont stockées dans un tableau à deux dimensions, et sont indexées par leur position dans le jeu. Les cartes sont stockées dans l'ordre dans lequel elles sont affichées dans l'interface graphique.
+
+\pagebreak
+
+Les enfants (\texttt{state.getMoves()}) du jeu sont les configurations de jeu obtenues en déplaçant une carte. Pour obtenir les enfants, on parcourt la matrice de cartes, et on déplace les cartes en respectant les règles du jeu. On obtient ainsi une liste de configurations de jeu, qui sont les enfants de la configuration actuelle. On peut alors utiliser les algorithme de parcours de graphe ou de recherche par heuristique pour trouver la solution.
+
+\section{Heuristic}
+Cette classe représente une heuristique. Elle permet de calculer la valeur d'une configuration de jeu. Elle est utilisée par les algorithmes de recherche par heuristique pour trouver la solution.
+
+Une heuristique est une fonction qui prend en paramètre une configuration de jeu (\texttt{GameState}), et qui retourne un nombre (\texttt{Int}). Plus ce nombre est petit, plus la configuration est proche de la solution. Plus ce nombre est grand, plus la configuration est éloignée de la solution.
+
+La classe permet de composer des heuristiques en les combinant de la manière suivante avec des poids:
+\begin{lstlisting}
+Heuristic.combine(
+    heuristics: [
+        Heuristic.countMisplacedCards,
+        Heuristic.wrongColumnPlacement
+    ],
+    weights: [
+        1,
+        2
+    ]
+)
+// or
+Heuristic.combine([
+    (1, Heuristic.countMisplacedCards),
+    (2, Heuristic.wrongColumnPlacement)
+])
+\end{lstlisting}
+Heuristic.combine, prend en paramètre une liste de heuristiques (fonctions prenant une configuration de jeu en paramètre et retournant un nombre) et une liste de poids. Elle retourne une heuristique (une fonction prenant une configuration de jeu en paramètre et retournant un nombre) qui est la somme des heuristiques pondérées.
+
+\section{Statistics}
+Cette classe permet de comparer les algorithmes de recherche par heuristique et les algorithmes de parcours de graphe. Elle permet de:
+\begin{itemize}
+      \item \texttt{generateGames} \\
+            Générer $X$ configurations de jeu aléatoires de taille $M$x$N$.
+      \item \texttt{getArrangements} \\
+            Générer tous les arrangements $N$ de nombres dans un intervalle donné, ce qui permet plus tard de tester les poids des heuristiques afin de trouver les plus optimaux.
+      \item \texttt{findBestWeights} \\
+            Met en competition les differentes heuristique  générées avec les poids passées en paramètre en utilisant A*, ce qui nous permet de determiner les poids générant l'heuristique la plus performante.
+      \item \texttt{getPeformances} \\
+            On donne $N$ jeux et différents algorithme et nous renvoit un rapport sur l'execution des algorithme sur ces jeux afin de connaître le plus performant.
+      \item \texttt{executeAlgorithms} \\
+            Execute plusieurs algorithme sur un jeu donné et revoit un rapport de l'execution.
+\end{itemize}
+
+\section{Heuristics.playground}
+

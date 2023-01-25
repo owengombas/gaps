@@ -1,0 +1,59 @@
+% !TeX root = report.tex
+
+\documentclass[french,a4paper,11pt]{report}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{tgadventor}
+\usepackage{subfiles}
+\usepackage[parfill]{parskip}
+\usepackage{amsmath}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{color}
+
+% Set the font family to sans-serif
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\contentsname}{Table des matieres}
+\renewcommand{\chaptername}{Chapitre}
+\newcommand{\paragraphb}[1]{\paragraph{#1}\mbox{}\\}
+\titleformat{\chapter}[display] {\normalfont\Huge\bfseries}{\chaptertitlename\ \thechapter}{0pt}{\Huge}
+\titlespacing{\chapter}{0cm}{0cm}{0.5cm}
+
+\graphicspath{ {images/} }
+
+\title{Gaps - Projet P3}
+\author{Owen Gombas}
+\date{27.01.2023}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Swift,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\begin{document}
+\maketitle
+\tableofcontents{}
+
+\subfile{sections/1_introduction.tex}
+\subfile{sections/2_environment.tex}
+\subfile{sections/3_code.tex}
+\subfile{sections/4_heuristics.tex}
+
+\end{document}
