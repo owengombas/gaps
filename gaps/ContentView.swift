@@ -11,9 +11,9 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     private static let _h = Heuristic.compose([
-        (3, Heuristic.countMisplacedCards),
-        (1, Heuristic.stuckGaps(stuckByMaxRankWeight: 20)),
-        (1, Heuristic.wrongColumnPlacement)
+        (0, Heuristic.countMisplacedCards),
+        (2, Heuristic.stuckGaps()),
+        (6, Heuristic.wrongColumnPlacement)
     ])
     private static let _initialColumns = 10
     private static let _initialRows = 4
@@ -434,10 +434,8 @@ struct ContentView: View {
                                         self.perform(
                                                 name: "A*",
                                                 algorithm: { (onClosedAdded: ((Int) -> Void)?, onBetterStateFound: ((GameState, Int) -> Void)?) in
-                                                    let maxClosed = 1000
                                                     return await self._bestState.aStar(
                                                         heuristic: ContentView._h,
-                                                        maxClosed: maxClosed,
                                                         onClosedAdded: onClosedAdded,
                                                         onBetterStateFound: onBetterStateFound
                                                     )

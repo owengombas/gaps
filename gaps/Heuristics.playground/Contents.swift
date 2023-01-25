@@ -53,9 +53,14 @@ func getPeformances(
                         }
                     }
                     
-                    var sum = await group2.reduce(0.0, +)
+                    var sum = 0.0
+                    var count = 0.0
+                    for await value in group2 {
+                        count += 1
+                        sum += value
+                    }
                     
-                    return sum / Double(games.count)
+                    return sum / count
                 }
                 
                 return (algorithm.0, mean)
@@ -113,15 +118,28 @@ func findBestWeights(
                     let t = Timing().start()
                     let gRes = await game.aStar(heuristic: h, maxClosed: maxClosed)
                     
-                    return (gRes != nil ? Double(gRes!.countMisplacedCards()) : nil, t.stop().elapsedTime)
+                    return (
+                        gRes != nil ? Double(gRes!.countMisplacedCards()) : nil,
+                        t.stop().elapsedTime
+                    )
                 }
             }
             
-            let solved = group.filter{ $0.0 != nil }
-            let solvedCount = Double(Array(arrayLiteral: solved).count)
+            var count = 0.0
+            var totalMisplacedCards = 0.0
+            var totalTime = 0.0
+            for await value in group {
+                if value.0 == nil {
+                    continue
+                }
+                
+                totalMisplacedCards += value.0!
+                totalTime += value.1!
+                count += 1
+            }
             
-            let timeMean = await solved.map{ $0.1! }.reduce(0.0, +) / solvedCount
-            let placeMean = await solved.map{ $0.0! }.reduce(0.0, +) / solvedCount
+            let timeMean = totalTime / count
+            let placeMean = totalMisplacedCards / count
             
             return (placeMean, timeMean)
         }
@@ -129,7 +147,9 @@ func findBestWeights(
         values.append((res.0, res.1, a))
     }
     
-    return values.sorted{ $0.0 < $1.0 }.sorted{ $0.1 < $1.0 }
+    let sortedValues = values.sorted{ $0.0 < $1.0 }.sorted{ $0.1 < $1.1 }
+    
+    return sortedValues
 }
 
 let heuristics = [
@@ -139,10 +159,10 @@ let heuristics = [
 ]
 
 let bestWeights = await findBestWeights(
-    games: generateGames(n: 10, rows: 4, columns: 7),
-    range: 0...2,
+    games: generateGames(n: 5, rows: 4, columns: 13),
+    range: 0...6,
     heuristics: heuristics,
-    maxClosed: 5000
+    maxClosed: 1000
 )
 
 let h = Heuristic.compose(heuristics: heuristics, weights: [1, 1, 1])
