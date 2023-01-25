@@ -11,9 +11,9 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     private static let _h = Heuristic.compose([
-        (0, Heuristic.countMisplacedCards),
-        (2, Heuristic.stuckGaps()),
-        (6, Heuristic.wrongColumnPlacement)
+        (5, Heuristic.countMisplacedCards),
+        (1, Heuristic.stuckGaps()),
+        (4, Heuristic.wrongColumnPlacement)
     ])
     private static let _initialColumns = 10
     private static let _initialRows = 4
