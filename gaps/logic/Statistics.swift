@@ -89,6 +89,7 @@ class Statistics {
             }
             
             print(res.0, res.1, a)
+            
             values.append((res.0, res.1, a))
         }
         
@@ -101,46 +102,56 @@ class Statistics {
     static func getPeformances(
         games: [GameState],
         algorithms: [(String, (GameState) async -> GameState?)]
-    ) async -> [(String, TimeInterval)] {
-        let res = await withTaskGroup(of: (String, TimeInterval).self) { group in
-            var values: [(String, TimeInterval)] = []
-            
-            for algorithm in algorithms {
-                group.addTask {
-                    let mean: TimeInterval = await withTaskGroup(of: TimeInterval.self) { group2 in
-                        for game in games {
-                            group2.addTask {
-                                let t = Timing().start()
-                                _ = await algorithm.1(game)
-                                return t.stop().elapsedTime
-                            }
+    ) async -> [(String, Double, Double)] {
+        var values: [(String, Double, Double)] = []
+        
+        for algorithm in algorithms {
+            let res = await withTaskGroup(of: (Double?, Double?).self) { group in
+                for game in games {
+                    group.addTask {
+                        let t = Timing().start()
+                        let gRes = await algorithm.1(game)
+                        
+                        if gRes == nil {
+                            return (nil, t.stop().elapsedTime)
                         }
                         
-                        var sum = 0.0
-                        var count = 0.0
-                        for await value in group2 {
-                            count += 1
-                            sum += value
-                        }
-                        
-                        return sum / count
+                        return (Double(gRes!.countMisplacedCards()), t.stop().elapsedTime)
+                    }
+                }
+                
+                var count = 0.0
+                var totalMisplacedCards = 0.0
+                var totalTime = 0.0
+                for await value in group {
+                    if value.0 == nil {
+                        continue
                     }
                     
-                    return (algorithm.0, mean)
+                    totalMisplacedCards += value.0!
+                    totalTime += value.1!
+                    count += 1
                 }
+                
+                if count == 0 {
+                    return (0.0, 0.0)
+                }
+                
+                let timeMean = totalTime / count
+                let placeMean = totalMisplacedCards / count
+                
+                return (placeMean, timeMean)
             }
             
-            for await value in group {
-                values.append(value)
-            }
-            
-            return values
+            print("\(algorithm.0):\t average of \(res.0) misplaced cards and an average of \(res.1) seconds")
+                
+            values.append((algorithm.0, res.0, res.1))
         }
         
-        return res
+        return values
     }
     
-    func executeAlgorithms(
+    static func executeAlgorithms(
         gameState: GameState,
         algorithms: [(String, (GameState) async -> GameState?)]
     ) async -> [(String, GameState?, TimeInterval)] {
@@ -157,6 +168,12 @@ class Statistics {
             
             for await value in group {
                 values.append(value)
+                
+                if value.1 != nil {
+                    print("\(value.0):\t \(value.1!.countMisplacedCards()) misplaced cards in \(value.2) seconds")
+                } else {
+                    print("\(value.0):\t No solution found in \(value.2) seconds")
+                }
             }
             
             return values

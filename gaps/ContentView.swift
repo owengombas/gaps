@@ -139,7 +139,8 @@ struct ContentView: View {
             name: String = "",
             algorithm: @escaping (
                     @escaping (Int) -> Void,
-                    @escaping (GameState, Int) -> Void
+                    @escaping (GameState, Int) -> Void,
+                    Int?
             ) async -> GameState?,
             heuristicName: String? = nil
     ) {
@@ -217,7 +218,7 @@ struct ContentView: View {
                 self._tempBestState.copy(from: state)
             }
 
-            let result = await algorithm(onClosedAdded, onBetterStateFound)
+            let result = await algorithm(onClosedAdded, onBetterStateFound, nil)
             self._performingAnimation = true
             self._performingAlgorithm = false
 
@@ -433,11 +434,17 @@ struct ContentView: View {
                                     Button("Perform A*") {
                                         self.perform(
                                                 name: "A*",
-                                                algorithm: { (onClosedAdded: ((Int) -> Void)?, onBetterStateFound: ((GameState, Int) -> Void)?) in
+                                                algorithm: {
+                                                (
+                                                    onClosedAdded: ((Int) -> Void)?,
+                                                    onBetterStateFound: ((GameState, Int) -> Void)?,
+                                                    maxClosed: Int?
+                                                ) in
                                                     return await self._bestState.aStar(
                                                         heuristic: ContentView._h,
                                                         onClosedAdded: onClosedAdded,
-                                                        onBetterStateFound: onBetterStateFound
+                                                        onBetterStateFound: onBetterStateFound,
+                                                        maxClosed: maxClosed
                                                     )
                                                 }, heuristicName: "Misplaced cards"
                                         )

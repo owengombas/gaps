@@ -614,11 +614,12 @@ class GameState: Matrix<Card?>, Hashable {
      */
     func depthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
-        onBetterStateFound: ((GameState, Int) -> Void)? = nil
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+        maxClosed: Int? = nil
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
-        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound)
+        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound, maxClosed: maxClosed)
     }
 
     /**
@@ -626,18 +627,19 @@ class GameState: Matrix<Card?>, Hashable {
      */
     func breadthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
-        onBetterStateFound: ((GameState, Int) -> Void)? = nil
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+        maxClosed: Int? = nil
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
-        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound)
+        }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound, maxClosed: maxClosed)
     }
 
     func aStar(
             heuristic: (GameState) async -> Int,
-            maxClosed: Int? = nil,
             onClosedAdded: ((Int) -> Void)? = nil,
-            onBetterStateFound: ((GameState, Int) -> Void)? = nil
+            onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+            maxClosed: Int? = nil
     ) async -> GameState? {
         var open = Set<GameState>()
         var closed = Set<GameState>()
