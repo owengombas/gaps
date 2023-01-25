@@ -175,6 +175,14 @@ class GameState: Matrix<Card?>, Hashable {
         })
     }
 
+    func isGap(column: Int, row: Int) -> Bool {
+        return self.getElement(column: column, row: row) == nil
+    }
+
+    func isGap(position: (Int, Int)) -> Bool {
+        return self.isGap(column: position.0, row: position.1)
+    }
+
     /**
      Find a card position in the game
      */
@@ -242,6 +250,10 @@ class GameState: Matrix<Card?>, Hashable {
                 self._removedCards.append(v!)
             }
         }
+    }
+    
+    func removeLastCards() {
+        self.remove(CardRank(rawValue: self.columns - 1)!)
     }
 
     /**
@@ -538,7 +550,8 @@ class GameState: Matrix<Card?>, Hashable {
     func generalizedSearch(
             insert: (inout [GameState], inout GameState) -> Void,
             onClosedAdded: ((Int) -> Void)? = nil,
-            onBetterStateFound: ((GameState) -> Void)? = nil
+            onBetterStateFound: ((GameState, Int) -> Void)? = nil,
+            maxClosed: Int? = nil
     ) async -> GameState? {
         var bestState: GameState = self
         var bestScore: Int = self.countMisplacedCards()
@@ -555,13 +568,13 @@ class GameState: Matrix<Card?>, Hashable {
                 if stateScore < bestScore {
                     bestScore = stateScore
                     bestState = state
-                    onBetterStateFound?(bestState)
+                    onBetterStateFound?(bestState, closed.count)
                 }
             }
 
             let state = queue.removeFirst()
             if state.isSolved {
-                onBetterStateFound?(state)
+                onBetterStateFound?(state, closed.count)
                 return state
             }
 
@@ -571,6 +584,10 @@ class GameState: Matrix<Card?>, Hashable {
             closed.insert(state)
             onClosedAdded?(closed.count)
             checkBetterScore(state)
+
+            if maxClosed != nil && closed.count >= maxClosed! {
+                return bestState
+            }
             
             if Task.isCancelled { return bestState }
 
@@ -597,7 +614,7 @@ class GameState: Matrix<Card?>, Hashable {
      */
     func depthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
-        onBetterStateFound: ((GameState) -> Void)? = nil
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.insert(state, at: 0)
@@ -609,7 +626,7 @@ class GameState: Matrix<Card?>, Hashable {
      */
     func breadthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
-        onBetterStateFound: ((GameState) -> Void)? = nil
+        onBetterStateFound: ((GameState, Int) -> Void)? = nil
     ) async -> GameState? {
         return await self.generalizedSearch(insert: { queue, state in
             queue.append(state)
@@ -617,15 +634,16 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     func aStar(
-            heuristic: (GameState) -> Int,
+            heuristic: (GameState) async -> Int,
+            maxClosed: Int? = nil,
             onClosedAdded: ((Int) -> Void)? = nil,
-            onBetterStateFound: ((GameState) -> Void)? = nil
+            onBetterStateFound: ((GameState, Int) -> Void)? = nil
     ) async -> GameState? {
         var open = Set<GameState>()
         var closed = Set<GameState>()
 
         let start = self
-        let heuristicValue = heuristic(start)
+        let heuristicValue = await heuristic(start)
         start._gScore = 0
         start._fScore = start._gScore + heuristicValue
         open.insert(start)
@@ -639,13 +657,17 @@ class GameState: Matrix<Card?>, Hashable {
             let state = open.min(by: { $0._fScore < $1._fScore })!
 
             if state.isSolved {
-                onBetterStateFound?(state)
+                onBetterStateFound?(state, closed.count)
                 return state
             }
 
             open.remove(state)
             closed.insert(state)
             onClosedAdded?(closed.count)
+
+            if maxClosed != nil && closed.count >= maxClosed! {
+                return bestState
+            }
 
             if Task.isCancelled { return bestState }
 
@@ -667,7 +689,7 @@ class GameState: Matrix<Card?>, Hashable {
                     continue
                 }
 
-                let newHeuristicValue = heuristic(newState)
+                let newHeuristicValue = await heuristic(newState)
                 newState.parent = state
                 newState._gScore = tentativeGScore
                 newState._fScore = newState._gScore + newHeuristicValue
@@ -675,7 +697,7 @@ class GameState: Matrix<Card?>, Hashable {
                 if newHeuristicValue < bestH {
                     bestH = newHeuristicValue
                     bestState = newState
-                    onBetterStateFound?(bestState)
+                    onBetterStateFound?(bestState, closed.count)
                 }
 
                 if Task.isCancelled { return bestState }

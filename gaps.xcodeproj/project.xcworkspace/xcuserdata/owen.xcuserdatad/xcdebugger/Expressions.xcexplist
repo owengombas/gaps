@@ -3,6 +3,9 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "GameState.rewind():GameState.swift">
+      </ContextState>
+      <ContextState
          contextName = "ContentView.publishState():ContentView.swift">
          <PersistentStrings>
             <PersistentString
@@ -12,9 +15,6 @@
                value = "self._moves">
             </PersistentString>
          </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "GameState.rewind():GameState.swift">
       </ContextState>
       <ContextState
          contextName = "closure #1 in ContentView.perform(name:algorithm:):ContentView.swift">
@@ -49,6 +49,14 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "Matrix.getPublishedElement(column:row:):Matrix.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "publishedValues">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "GameState.generalizedSearch(insert:):GameState.swift">
          <PersistentStrings>
             <PersistentString
@@ -56,14 +64,6 @@
             </PersistentString>
             <PersistentString
                value = "self.seed">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
-         contextName = "Matrix.getPublishedElement(column:row:):Matrix.swift">
-         <PersistentStrings>
-            <PersistentString
-               value = "publishedValues">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -111,6 +111,14 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "GameState.aStar(heuristic:onClosedAdded:onBetterStateFound:):GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "heuristic(self)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "State.init():State.swift">
       </ContextState>
       <ContextState
@@ -122,18 +130,18 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "static Card.fromNumber(number:columns:rows:):Card.swift">
-         <PersistentStrings>
-            <PersistentString
-               value = "number / columns">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
          contextName = "ContentView.getPositionFromHGridIndex(index:):ContentView.swift">
          <PersistentStrings>
             <PersistentString
                value = "self.state.lines">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "static Card.fromNumber(number:columns:rows:):Card.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "number / columns">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
