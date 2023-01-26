@@ -7,7 +7,18 @@
 
 import Foundation
 
+/**
+ Statistics class used to compute statistics on the performance of algorithms with heuristics
+ */
 class Statistics {
+    /**
+     Generate a list of games
+     - Parameters:
+       - n: number of games to generate
+       - rows: number of rows in the games
+       - columns: number of columns in the games
+     - Returns: a list of games
+     */
     static func generateGames(n: Int, rows: Int, columns: Int) -> [GameState] {
         return (0..<n).map { _ in
             let g = GameState(columns: columns, rows: rows)
@@ -16,7 +27,14 @@ class Statistics {
             return g
         }
     }
-    
+
+    /**
+     Compute a list of arrangements of numbers in n positions
+     - Parameters:
+       - n: number of positions
+       - range: range of numbers to arrange
+     - Returns: a list of arrangements
+     */
     static func getArrangements(n: Int, range: ClosedRange<Int>) -> [[Double]] {
         var arrangements: [[Double]] = []
         
@@ -36,7 +54,16 @@ class Statistics {
         
         return arrangements
     }
-    
+
+    /**
+     Find the best weights for a list of heuristics
+     - Parameters:
+       - games: list of games to test
+       - range: range of the weights
+       - heuristics: list of heuristics
+       - maxClosed: maximum number of closed nodes
+     - Returns: the best weights
+     */
     static func findBestWeights(
         games: [GameState],
         range: ClosedRange<Int>,
@@ -98,8 +125,15 @@ class Statistics {
         
         return values
     }
-    
-    static func getPeformances(
+
+    /**
+     Get the performances of a list of algorithms on a list of games
+     - Parameters:
+       - games: list of games
+       - algorithms: list of algorithms
+     - Returns: a list of performances (time, misplaced cards, algorithm name)
+     */
+    static func executeAlgorithmsOnMultipleGames(
         games: [GameState],
         algorithms: [(String, (GameState) async -> GameState?)]
     ) async -> [(String, Double, Double)] {
@@ -150,8 +184,15 @@ class Statistics {
         
         return values
     }
-    
-    static func executeAlgorithms(
+
+    /**
+     Get the performances of a list of algorithms on a list of games
+     - Parameters:
+       - gameState: game state
+       - algorithms: list of algorithms
+     - Returns: The performances of the algorithms on the given gameState (time, misplaced cards, algorithm name)
+     */
+    static func executeAlgorithmsOnOneGame(
         gameState: GameState,
         algorithms: [(String, (GameState) async -> GameState?)]
     ) async -> [(String, GameState?, TimeInterval)] {

@@ -7,6 +7,9 @@
 
 import Foundation
 
+/**
+ The card suits (Diamonds, Club, Heart, Spade)
+ */
 enum CardSuit: Int, CaseIterable {
     case CLUB    = 0   // ♣
     case DIAMOND = 1   // ♦

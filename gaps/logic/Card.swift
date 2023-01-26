@@ -7,6 +7,9 @@
 
 import Foundation
 
+/**
+ A card data structure
+ */
 class Card: CustomStringConvertible {
     private var _rank: CardRank
     private var _suit: CardSuit

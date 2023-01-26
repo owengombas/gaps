@@ -16,9 +16,9 @@ let heuristics = [
 let weights: [Double] = [5, 1, 4]
 let h = Heuristic.compose(heuristics: heuristics, weights: weights)
 
-// let res = await Statistics.executeAlgorithms(gameState: g, algorithms: algorithms)
+// let res = await Statistics.executeAlgorithmsOnOneGame(gameState: g, algorithms: algorithms)
 
-// await Statistics.getPeformances(games: Statistics.generateGames(n: 10, rows: 4, columns: 13), algorithms: algorithms)
+// await Statistics.executeAlgorithmsOnMultipleGames(games: Statistics.generateGames(n: 10, rows: 4, columns: 13), algorithms: algorithms)
 
 let bestWeights = await Statistics.findBestWeights(
     games: Statistics.generateGames(n: 5, rows: 4, columns: 13),

@@ -7,6 +7,9 @@
 
 import Foundation
 
+/**
+ Card ranks (Ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, Jack, Queen, King)
+ */
 enum CardRank: Int {
     case ACE    = 0
     case TWO    = 1

@@ -7,12 +7,18 @@
 
 import Foundation
 
+/**
+ A matrix data structure
+ */
 class Matrix<T>: CustomStringConvertible, ObservableObject {
     private var _values: [[T]]
     private var _columns: Int
     private var _rows: Int
     private var _defaultValue: (Int, Int, Int, Matrix<T>) -> T
-    
+
+    /**
+     The string representation of the matrix
+     */
     var description: String {
         get {
             var s = "(\(self._columns)x\(self._rows))\n"
@@ -27,13 +33,19 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
             return s
         }
     }
-    
+
+    /**
+     The values of the matrix as a 2D array
+     */
     var values: [[T]] {
         get {
             return self._values
         }
     }
-    
+
+    /**
+     The capacity of the matrix (columns * rows)
+     */
     var capacity: Int {
         get { return self._columns * self._rows }
     }
@@ -62,7 +74,10 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         
         self.refresh()
     }
-    
+
+    /**
+     Refresh the values with the default value function
+     */
     func refresh() {
         var c = 0
         
@@ -78,7 +93,10 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
             }
         }
     }
-    
+
+    /**
+     Remove the element of the matrix and refresh the values
+     */
     func reset() {
         self._values.removeAll(keepingCapacity: true)
         self.refresh()
@@ -97,48 +115,93 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         )
     }
 
+    /**
+     Copy the given matrix into the current matrix
+     - Parameter from: The matrix to copy from
+     */
     func copy(from: Matrix<T>) {
         self._columns = from._columns
         self._rows = from._rows
         
         self.forEach {i, j, card, c, m in
-            self.setElement(i: i, j: j, value: from.getElement(column: i, row: j))
+            self.setElement(column: i, row: j, value: from.getElement(column: i, row: j))
         }
     }
-    
+
+    /**
+     Get the element at the given column and row
+     - Parameters:
+       - column: The column of the element
+       - row: The row of the element
+     - Returns: The element at the given column and row
+     */
     func getElement(column: Int, row: Int) -> T {
         return self._values[row][column]
     }
-    
+
+    /**
+     Get the element at the given position
+     - Parameters:
+       - position: The position of the element
+     - Returns: The element at the given position
+     */
     func getElement(position: (Int, Int)) -> T {
         return getElement(column: position.0, row: position.1)
     }
-    
+
+    /**
+     Get the element at the given position as a index in the flattened matrix
+     - Parameters:
+       - number: The index in the flattened matrix
+     - Returns: The element at the given index
+     */
     func getElement(number: Int) -> T {
         let pos = self.getPositionFrom(index: number)
         return self.getElement(column: pos.0, row: pos.1)
     }
-    
-    func setElement(i: Int, j: Int, value: T) {
-        self._values[j][i] = value
+
+    /**
+     Set the element at the given column and row
+     - Parameters:
+       - column: The column of the element
+       - row: The row of the element
+       - value: The value to set
+     */
+    func setElement(column: Int, row: Int, value: T) {
+        self._values[row][column] = value
     }
-    
+
+    /**
+     Set the element at the given position
+     - Parameters:
+       - position: The position of the element
+       - value: The value to set
+     */
     func setElement(position: (Int, Int), value: T) {
-        self.setElement(i: position.0, j: position.1, value: value)
+        self.setElement(column: position.0, row: position.1, value: value)
     }
-    
+
+
+    /**
+     Set the element at the given position as a index in the flattened matrix
+     - Parameters:
+       - number: The index in the flattened matrix
+       - value: The value to set
+     */
     func setElement(number: Int, value: T) {
         let pos = self.getPositionFrom(index: number)
-        return self.setElement(i: pos.0, j: pos.1, value: value)
+        return self.setElement(column: pos.0, row: pos.1, value: value)
     }
     
     /**
-     Set all elements to a value
+     Set all elements to a value using a function
+    - Parameters:
+        - value: The value function (column, row, value, count) -> newValue
      */
     func setElements(value: (Int, Int, T, Int) -> T) {
         self.forEach {i, j, v, c, m in
             let newValue = value(i, j, v, c)
-            self.setElement(i: i, j: j, value: newValue)
+            self.setElement(column: i, row: j, value: newValue)
         }
     }
     
@@ -177,8 +240,8 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
     func swap(i1: Int, i2: Int, j1: Int, j2: Int) {
         let e1 = self.getElement(column: i1, row: i2)
         let e2 = self.getElement(column: j1, row: j2)
-        self.setElement(i: j1, j: j2, value: e1)
-        self.setElement(i: i1, j: i2, value: e2)
+        self.setElement(column: j1, row: j2, value: e1)
+        self.setElement(column: i1, row: i2, value: e2)
     }
     
     /**
@@ -195,7 +258,7 @@ class Matrix<T>: CustomStringConvertible, ObservableObject {
         let copy = self.copy()
         
         copy.forEach {i, j, v, c, m in
-            copy.setElement(i: i, j: j, value: cb(i, j, v, c))
+            copy.setElement(column: i, row: j, value: cb(i, j, v, c))
         }
         
         return copy

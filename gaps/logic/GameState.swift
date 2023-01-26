@@ -15,7 +15,11 @@ class GameState: Matrix<Card?>, Hashable {
     private var _parent: GameState? = nil
     private var _gScore: Int = 0
     private var _fScore: Int = 0
+    private var _hScore: Int = 0
 
+    /**
+     The seed of the game
+     */
     var seed: String {
         get {
             let padding = { (n: Int) in
@@ -44,6 +48,36 @@ class GameState: Matrix<Card?>, Hashable {
         }
     }
 
+    /**
+     The computed gScore of the game
+     */
+    var gScore: Int {
+        get {
+            return self._gScore
+        }
+    }
+
+    /**
+     The computed fScore of the game
+     */
+    var fScore: Int {
+        get {
+            return self._fScore
+        }
+    }
+
+    /**
+     The computed hScore of the game (the heuristic value)
+     */
+    var hScore: Int {
+        get {
+            return self._hScore
+        }
+    }
+
+    /**
+     The max card rank of the game
+     */
     var maxRank: CardRank {
         get {
             return CardRank.init(rawValue: self.columns - 1)!
@@ -89,6 +123,9 @@ class GameState: Matrix<Card?>, Hashable {
         }
     }
     
+    /**
+     Get the cards of the game (flatten), use values to get cards as a matric
+     */
     var cards: [Card?] {
         get {
             return self.values.flatMap { card in
@@ -97,10 +134,19 @@ class GameState: Matrix<Card?>, Hashable {
         }
     }
 
+    /**
+     Initialize a game state with 13 columns and 4 rows
+     */
     convenience init() {
         self.init(columns: 13, rows: 4)
     }
 
+    /**
+     Initialize a game state with a specific number of columns and rows
+     - Parameters:
+       - columns: the number of columns
+       - rows: the number of rows
+     */
     init(columns: Int, rows: Int) {
         assert((1...13).contains(columns), "Columns must be in [1, 13]")
         assert((1...4).contains(rows), "Rows must be in [1, 4]")
@@ -113,14 +159,18 @@ class GameState: Matrix<Card?>, Hashable {
                 }
         )
     }
-    
+
+    /**
+     Initialize a game state with a seed
+     - Parameter seed: the seed
+     */
     init(seed: String) {
         super.init(columns: 0, rows: 0, defaultValue: { _, _, _, _ in return nil })
         let _ = self.loadSeed(seed: seed)
     }
 
     /**
-     Get a copy of the actual state
+     Get a copy of the current state
      */
     override func copy() -> GameState {
         let s = GameState(columns: self.columns, rows: self.rows)
@@ -167,7 +217,7 @@ class GameState: Matrix<Card?>, Hashable {
     }
     
     /**
-     The gapses positions
+     The gaps positions
      */
     func getGaps() -> [(Int, Int)] {
         return self.findPositions(condition: { i, j, v, c in
@@ -175,16 +225,33 @@ class GameState: Matrix<Card?>, Hashable {
         })
     }
 
+    /**
+     Is the card at the given position a gap ?
+     - Parameters:
+       - column: the column
+       - row: the row
+     - Returns: true if the card is a gap, false otherwise
+     */
     func isGap(column: Int, row: Int) -> Bool {
         return self.getElement(column: column, row: row) == nil
     }
 
+
+    /**
+     Is the card at the given position a gap ?
+     - Parameters:
+         - position: the position
+     - Returns: true if the card is a gap, false otherwise
+     */
     func isGap(position: (Int, Int)) -> Bool {
         return self.isGap(column: position.0, row: position.1)
     }
 
     /**
      Find a card position in the game
+     - Parameters:
+        - card: the card to find
+     - Returns: the card position if found, nil otherwise
      */
     func find(card: Card?) -> (Int, Int)? {
         return self.findOnePosition(condition: { (i: Int, j: Int, v: Card?, c: Int) in
@@ -192,6 +259,11 @@ class GameState: Matrix<Card?>, Hashable {
         })
     }
 
+    /**
+     Load a seed and rearrange the game
+     - Parameter seed: the seed
+     - Returns: True if the seed is valid, false otherwise
+     */
     func loadSeed(seed: String) -> Bool {
         if seed.count < 4 {
             return false
@@ -223,11 +295,11 @@ class GameState: Matrix<Card?>, Hashable {
                 let value = String(seed[index])
 
                 if value == "XX" {
-                    tempState.setElement(i: column, j: row, value: nil)
+                    tempState.setElement(column: column, row: row, value: nil)
                 } else {
                     let intValue = Int(value)
                     if intValue != nil {
-                        tempState.setElement(i: column, j: row, value: Card.fromNumber(number: intValue!, columns: self.columns, rows: self.rows))
+                        tempState.setElement(column: column, row: row, value: Card.fromNumber(number: intValue!, columns: self.columns, rows: self.rows))
                     } else {
                         return false
                     }
@@ -241,23 +313,30 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     /**
-     Remove the king cards from the game
+     Remove cards with a specific rank
+     - Parameter cardRank: the rank
      */
     func remove(_ cardRank: CardRank) {
         self.forEach { i, j, v, c, m in
             if v?.rank == cardRank {
-                self.setElement(i: i, j: j, value: nil)
+                self.setElement(column: i, row: j, value: nil)
                 self._removedCards.append(v!)
             }
         }
     }
-    
+
+    /**
+     Remove the last cards of the game (the one with the highest rank)
+     */
     func removeLastCards() {
         self.remove(CardRank(rawValue: self.columns - 1)!)
     }
 
     /**
      Generate all moves for a specific card rank to a specific position
+     - Parameters:
+        - gap: the gap position
+        - condition: the condition to apply to the card
      */
     private func getMovesFor(gap: (Int, Int), condition: (Card?) -> Bool) -> [Move] {
         var acesMoves: [Move] = []
@@ -282,10 +361,14 @@ class GameState: Matrix<Card?>, Hashable {
 
         return acesMoves
     }
-    
+
+    /**
+    Generate all moves (children) of the current game
+     - Returns: An array of Move
+     */
     func getMoves() -> [Move] {
         let moves = self.getGaps().reduce(into: []) { (moves: inout [Move], gap: (Int, Int)) in
-            // If the gap is at the begining of a row, then all aces can fill it
+            // If the gap is at the beginning of a row, then all aces can fill it
             if gap.0 <= 0 {
                 moves.append(contentsOf: self.getMovesFor(gap: gap) { card in
                     card?.rank == .ACE
@@ -338,6 +421,7 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Verify if a move is performable, if the user can move the card and mutate the state, relying on the game rules
+     - Parameter move: The move to perform
      */
     func verifyMove(move: Move) -> Bool {
         let supposedGap = self.getElement(position: move.to)
@@ -376,6 +460,8 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Apply a move and change the current state
+     - Parameter move: The move to apply
+     - Parameter verify: If true, the move will be verified before applying it (if the rules are respected)
      */
     func performMove(move: Move, verify: Bool = false) -> GameState {
         if verify == true {
@@ -391,6 +477,7 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get the possible moves for a specified card (you have to perform computeMoves before)
+     - Parameter card: The card to get the moves for
      */
     func possibleMoves(card: Card) -> [Move] {
         return self.getMoves().filter({ move in
@@ -399,7 +486,8 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     /**
-    Is the card in the moves, can the card be moved in a gap (you have to perform computeMoves before)
+     Is the card in the moves, can the card be moved in a gap (you have to perform computeMoves before)
+     - Parameter card: The card to check
      */
     func isMovable(card: Card) -> Bool {
         return self.possibleMoves(card: card).count > 0
@@ -407,6 +495,7 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get all the possible gaps where a card can be moved in (you have to perform computeMoves before)
+     - Parameter card: The card to move
      */
     func possibleGaps(card: Card) -> [Move] {
         return self.getMoves().filter({ move in
@@ -416,6 +505,8 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Can the card be moved inside a specified gap (you have to perform computeMoves before)
+     - Parameter card: The card to move
+     - Parameter gap: The position of the gap where the card can be moved
      */
     func isAPossibleGap(card: Card?, gap: (Int, Int)) -> Bool {
         if card === nil {
@@ -437,6 +528,8 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Can the card be moved inside a specified gap (you have to perform computeMoves before)
+     - Parameter card: The card to move
+     - Parameter gap: The gap position (flatten) where the card can be moved
      */
     func isAPossibleGap(card: Card?, gap: Int) -> Bool {
         return self.isAPossibleGap(card: card, gap: self.getPositionFrom(index: gap))
@@ -444,6 +537,7 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get the previous Card in the game from a position
+     - Parameter position: The position of the card
      */
     func previous(position: (Int, Int)) -> Card? {
         return self.previous(i: position.0, j: position.1)
@@ -451,6 +545,8 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get the previous Card in the game from a position
+     - Parameter i: Column
+     - Parameter j: Row
      */
     func previous(i: Int, j: Int) -> Card? {
         if i - 1 >= 0 {
@@ -461,6 +557,7 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get the next Card in the game from a position
+     - Parameter position: The position of the card
      */
     func next(position: (Int, Int)) -> Card? {
         return self.next(i: position.0, j: position.1)
@@ -468,6 +565,8 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Get the next Card in the game from a position
+     - Parameter i: Column
+     - Parameter j: Row
      */
     func next(i: Int, j: Int) -> Card? {
         if i + 1 <= self.columns - 1 {
@@ -477,7 +576,8 @@ class GameState: Matrix<Card?>, Hashable {
     }
 
     /**
-    Get the number of misplaced cards
+     Get the number of misplaced cards
+     - Returns: The number of misplaced cards
      */
     func countMisplacedCards() -> Int {
         var count = 0
@@ -521,6 +621,9 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Is the GameState equals to an another one
+     - Parameters:
+        - to: The GameState to compare
+     - Returns: True if the two states are equals, false otherwise
      */
     func isEquals(to: GameState?) -> Bool {
         if self.capacity != to?.capacity {
@@ -546,6 +649,12 @@ class GameState: Matrix<Card?>, Hashable {
     /**
      Depth first search: insert the state at the beginning of the list (queue.insert(0, state))
      Breadth first search: insert the state at the end of the list (queue.append(state))
+     - Parameters:
+        - insert: the function to insert the state in the queue
+        - onClosedAdded: callback when a state is added to the closed list
+        - onBetterStateFound: callback when a better state is found
+        - maxClosed: maximum number of states in the closed list
+     - Returns: the best state found
      */
     func generalizedSearch(
             insert: (inout [GameState], inout GameState) -> Void,
@@ -611,6 +720,11 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Depth first search
+     - Parameters:
+        - onClosedAdded: callback when a state is added to the closed list
+        - onBetterStateFound: callback when a better state is found
+        - maxClosed: maximum number of states in the closed list
+     - Returns: the best state found
      */
     func depthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
@@ -624,6 +738,11 @@ class GameState: Matrix<Card?>, Hashable {
 
     /**
      Breadth first search
+     - Parameters:
+        - onClosedAdded: callback when a state is added to the closed list
+        - onBetterStateFound: callback when a better state is found
+        - maxClosed: maximum number of states in the closed list
+     - Returns: the best state found
      */
     func breadthFirstSearch(
         onClosedAdded: ((Int) -> Void)? = nil,
@@ -635,6 +754,15 @@ class GameState: Matrix<Card?>, Hashable {
         }, onClosedAdded: onClosedAdded, onBetterStateFound: onBetterStateFound, maxClosed: maxClosed)
     }
 
+    /**
+     A* search
+     - Parameters:
+        - heuristic: the heuristic function
+        - onClosedAdded: callback when a state is added to the closed list
+        - onBetterStateFound: callback when a better state is found
+        - maxClosed: maximum number of states in the closed list
+     - Returns: the best state found
+     */
     func aStar(
             heuristic: (GameState) async -> Int,
             onClosedAdded: ((Int) -> Void)? = nil,
@@ -648,6 +776,7 @@ class GameState: Matrix<Card?>, Hashable {
         let heuristicValue = await heuristic(start)
         start._gScore = 0
         start._fScore = start._gScore + heuristicValue
+        start._hScore = heuristicValue
         open.insert(start)
 
         var bestState: GameState = start
@@ -695,6 +824,7 @@ class GameState: Matrix<Card?>, Hashable {
                 newState.parent = state
                 newState._gScore = tentativeGScore
                 newState._fScore = newState._gScore + newHeuristicValue
+                newState._hScore = newHeuristicValue
 
                 if newHeuristicValue < bestH {
                     bestH = newHeuristicValue
@@ -709,10 +839,16 @@ class GameState: Matrix<Card?>, Hashable {
         return nil
     }
 
+    /**
+     The hash value of the state (seed)
+     */
     func hash(into hasher: inout Hasher) {
         hasher.combine(self.seed)
     }
-    
+
+    /**
+     The equality of two states
+     */
     static func ==(lhs: GameState, rhs: GameState) -> Bool {
         return lhs.isEquals(to: rhs)
     }

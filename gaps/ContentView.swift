@@ -9,15 +9,30 @@ import SwiftUI
 import Charts
 import UniformTypeIdentifiers
 
+/**
+ The main view of the game
+ */
 struct ContentView: View {
+    /**
+     The heuristic used for A*
+     */
     private static let _h = Heuristic.compose([
         (5, Heuristic.countMisplacedCards),
         (1, Heuristic.stuckGaps()),
         (4, Heuristic.wrongColumnPlacement)
     ])
+    
+    /**
+     The inital numbe of columns for the game
+     */
     private static let _initialColumns = 10
+    
+    /**
+     The initial number of rows for the game
+     */
     private static let _initialRows = 4
 
+    
     @StateObject private var _state: GameState = GameState(columns: ContentView._initialColumns, rows: ContentView._initialRows)
     @State private var _stateCards: [[Card?]] = []
     @State private var _moves: [Move] = []
@@ -213,7 +228,7 @@ struct ContentView: View {
 
             let onBetterStateFound: (GameState, Int) -> Void = { state, closedCount in
                 let misplacedCards = state.countMisplacedCards()
-                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards")
+                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards (hScore: \(state.hScore), gScore: \(state.gScore), fScore: \(state.fScore))")
                 self._betterStateFoundOverClosedNodes.append(Measure(x: Double(closedCount), y: Double(misplacedCards), z: name))
                 self._tempBestState.copy(from: state)
             }

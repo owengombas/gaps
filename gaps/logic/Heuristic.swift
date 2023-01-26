@@ -7,11 +7,26 @@
 
 import Foundation
 
+/**
+ Heuristic class used to compute the score of a game state
+*/
 class Heuristic {
+    /**
+     Count the number of misplaced cards
+     - Parameter state: the game state
+     - Returns: the number of misplaced cards
+     */
     static func countMisplacedCards(state: GameState) async -> Int {
         return state.countMisplacedCards()
     }
 
+    /**
+     Heuristic that penalizes gaps that are stuck by a card of a higher rank
+     - Parameters:
+       - stuckByMaxRankWeight: weight of the penalty for a gap stuck by a card of the maximum rank
+       - stuckByGapWeight: weight of the penalty for a gap stuck by a gap
+     - Returns: a heuristic function
+     */
     static func stuckGaps(stuckByMaxRankWeight: Double = 1, stuckByGapWeight: Double = 1) -> (GameState) async -> Int {
         return { (state: GameState) in
             let maxRank = CardRank(rawValue: state.maxRank.rawValue - 1)
@@ -48,6 +63,11 @@ class Heuristic {
         }
     }
 
+    /**
+     Heuristic that penalizes the cards that aren't in the right column
+     - Parameter state: the game state
+     - Returns: the number of misplaced cards on the columns
+     */
     static func wrongColumnPlacement(state: GameState) async -> Int {
         var wrongColumnPlacement = 0
         
@@ -67,6 +87,11 @@ class Heuristic {
         return wrongColumnPlacement
     }
 
+    /**
+     Compose a list of heuristics with weights into a single heuristic
+     - Parameter weightsWithHeuristics: a list of weights and heuristics
+     - Returns: a heuristic function
+     */
     static func compose(_ weightsWithHeuristics: [(Double, (GameState) async -> Int)]) -> (GameState) async -> Int {
         return { state in
             return await withTaskGroup(of: Double.self) { group in
@@ -81,7 +106,14 @@ class Heuristic {
             }
         }
     }
-    
+
+    /**
+     Compose a list of heuristics with weights into a single heuristic
+     - Parameters:
+       - heuristics: a list of heuristics
+       - weights: a list of weights
+     - Returns: a heuristic function
+     */
     static func compose(heuristics: [(GameState) async -> Int], weights: [Double]) -> (GameState) async -> Int {
         precondition(heuristics.count == weights.count)
 
