@@ -667,19 +667,19 @@ class GameState: Matrix<Card?>, Hashable {
 
         var queue: [GameState] = [self]
         var closed = Set<GameState>()
+        
+        let checkBetterScore = { (state: GameState) in
+            let stateScore = state.countMisplacedCards()
+
+            if stateScore < bestScore {
+                bestScore = stateScore
+                bestState = state
+                onBetterStateFound?(bestState, closed.count)
+            }
+        }
 
         while !queue.isEmpty {
             if Task.isCancelled { return bestState }
-
-            let checkBetterScore = { (state: GameState) in
-                let stateScore = state.countMisplacedCards()
-
-                if stateScore < bestScore {
-                    bestScore = stateScore
-                    bestState = state
-                    onBetterStateFound?(bestState, closed.count)
-                }
-            }
 
             let state = queue.removeFirst()
             if state.isSolved {
@@ -780,7 +780,17 @@ class GameState: Matrix<Card?>, Hashable {
         open.insert(start)
 
         var bestState: GameState = start
-        var bestH: Int = heuristicValue
+        var bestScore: Int = start.countMisplacedCards()
+        
+        let checkBetterScore = { (state: GameState) in
+            let stateScore = state.countMisplacedCards()
+
+            if stateScore < bestScore {
+                bestScore = stateScore
+                bestState = state
+                onBetterStateFound?(bestState, closed.count)
+            }
+        }
 
         while !open.isEmpty {
             if Task.isCancelled { return bestState }
@@ -825,12 +835,7 @@ class GameState: Matrix<Card?>, Hashable {
                 newState._gScore = tentativeGScore
                 newState._fScore = newState._gScore + newHeuristicValue
                 newState._hScore = newHeuristicValue
-
-                if newHeuristicValue < bestH {
-                    bestH = newHeuristicValue
-                    bestState = newState
-                    onBetterStateFound?(bestState, closed.count)
-                }
+                checkBetterScore(newState)
 
                 if Task.isCancelled { return bestState }
             }

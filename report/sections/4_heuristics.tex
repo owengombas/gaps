@@ -1,7 +1,7 @@
 \chapter{Heuristiques}
 
 \section{Méthodologie}
-J'ai choisis de mettre faire en sorte que l'heuristique avec la valeur la plus basse représente un état le plus près de la solution. Dans cette logique j'ai alors implémentées trois heuristiques (détaillées dans les sections suivantes) et de les combiner pour obtenir une heuristique finale. Pour cela j'ai utilisé la méthode de la moyenne pondérée. Pour chaque heuristique j'ai déterminé un poids qui représente l'importance de l'heuristique dans la recherche de la solution. Pour déterminer ces poids j'ai créer une fonction dans la classe \texttt{Statistics} qui met en competition les heuristiques entre elles. Cette fonction prend en paramètre un nombre de parties à jouer et retourne un tableau de poids. Pour chaque partie, elle joue avec les trois heuristiques et enregistre le nombre de cartes mal placées de chaque heuristique. Elle trie ensuite ce tableau et retourne un tableau de poids où le poids de l'heuristique qui a le moins de cartes mal placées est en premier. Cette méthode permet de déterminer quelles heuristiques sont les plus efficaces et de les mettre en avant dans la recherche de la solution.
+J'ai choisis de faire en sorte que l'heuristique avec la valeur la plus basse représente un état le plus près de la solution. Dans cette logique j'ai alors implémentées trois heuristiques (détaillées dans les sections suivantes) et de les combiner pour obtenir une heuristique finale. Pour cela j'ai utilisé la méthode de la moyenne pondérée. Pour chaque heuristique j'ai déterminé un poids qui représente l'importance de l'heuristique dans la recherche de la solution. Pour déterminer ces poids j'ai créer une fonction dans la classe \texttt{Statistics} qui met en competition les heuristiques entre elles. Cette fonction prend en paramètre un nombre de parties à jouer et retourne un tableau de poids. Pour chaque partie, elle joue avec les trois heuristiques et enregistre le nombre de cartes mal placées de chaque heuristique. Elle trie ensuite ce tableau et retourne un tableau de poids où le poids de l'heuristique qui a le moins de cartes mal placées est en premier. Cette méthode permet de déterminer quelles heuristiques sont les plus efficaces et de les mettre en avant dans la recherche de la solution.
 
 \section{Heuristique 1 - Nombre de cartes mal placées}
 Cette heuristique renvoit le nombre de cartes mal placées. Relativement à l'as en début de ligne. C'est à dire que la couleur de l'as en début de ligne détermine la couleur de la ligne. Si une carte n'est pas de la même couleur que l'as en début de ligne alors elle est mal placée. Cette heuristique est relativement simple à implémenter et donne de bons résultats. Elle est donc utilisée comme heuristique de base.
@@ -59,3 +59,22 @@ J'ai obtenue les poids suivants:
 Ces résultats ne représentent pas forcément les meilleurs poids. Ils sont simplement le résultat de l'observation que j'ai fait sur les résultats de la fonction \texttt{findBestWeights} que je n'ai pas pu complétement éxecuter à cause de sa complexité.
 
 Cela signifie que l'heuristique 1 est la plus importante, l'heuristique 2 est la moins importante et l'heuristique 3 est la deuxième plus importante. Ces poids sont donc utilisés pour l'application finale. Et peuvent être modifiés via le code dans le fichier \texttt{ContentView.swift} par la variable \texttt{\_h}.
+
+\pagebreak
+
+Une piste d'amélioration serait de faire varier les sous-poids de la deuxième heuristique avec \texttt{stuckByMaxRankWeight} et \texttt{stuckByGapWeight}. On peut le faire de la façon suivante:
+\begin{lstlisting}
+let heuristics = [
+Heuristic.countMisplacedCards,
+    Heuristic.stuckGaps(stuckByGapWeight: 0),
+    Heuristic.stuckGaps(stuckByMaxRankWeight: 0),
+    Heuristic.wrongColumnPlacement
+]
+
+let bestWeights = await Statistics.findBestWeights(
+    games: Statistics.generateGames(n: 5, rows: 4, columns: 13),
+    range: 0...5,
+    heuristics: heuristics,
+    maxClosed: 3000
+)
+\end{lstlisting}

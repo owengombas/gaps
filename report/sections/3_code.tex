@@ -1,24 +1,23 @@
 \chapter{Code}
 
 \section{UI}
-Le code principal de l'interface graphique se trouve dans le fichier \texttt{ContentView.swift}. Elle permet d'afficher une configuration de jeu et d'intéragir avec. On peut déplacer les cartes en cliquant dessus, et en les déplacer vers un espace vide. Lorsqu'on execute un des algorithmes, on peut consulter les logs de l'exécution dans un espace dédié, et voir le déroulement de l'algorithme dans l'interface graphique une fois que celui-ci est terminé.
+Le code principal de l'interface graphique se trouve dans le fichier \texttt{ContentView.swift}. Elle permet d'afficher une configuration de jeu et d'intéragir avec. On peut déplacer les cartes en cliquant dessus, et les déplacer vers un espace vide. Lorsqu'on execute un des algorithmes, on peut consulter les logs de l'exécution dans un espace dédié, et voir le déroulement de l'algorithme dans l'interface graphique une fois que celui-ci est terminé. Des graphiques en temps réel permettent de suivre l'évolution des statistiques de l'algorithme executé et en cours d'exécution.
 
 L'interface est composée des composants "custom" suivants:
 \begin{itemize}
       \item \texttt{StateUI} \\
             Affiche le plateau de jeu et permet d'interagir avec celui-ci.
       \item \texttt{ChartUI} et \texttt{Measure} \\
-            Affiche un graphique représentant divers statistiques.
+            Affiche un graphique représentant diver statisques.
 \end{itemize}
 
-\section{GameState.swift}
-Cette classe représente l'état du jeu. Elle nous permet de stocker les cartes. Elle permet aussi de déplacer les cartes, de vérifier si le jeu est terminé, de générer les coups possibles, et d'effectuer toutes les opérations permettant l'intéraction avec le jeu.
-
-La structures de données utilisées pour représenter le jeu est une matrice de \texttt{Card} (voir \texttt{Card.swift}). Les cartes sont stockées dans un tableau à deux dimensions, et sont indexées par leur position dans le jeu. Les cartes sont stockées dans l'ordre dans lequel elles sont affichées dans l'interface graphique.
+\section{Matrix}
+La structures de données utilisées pour représenter le jeu (\texttt{GameState}) est une matrice de \texttt{Card} (voir \texttt{Card.swift}). Les cartes sont stockées dans un tableau à deux dimensions, et sont indexées par leur position dans le jeu. On peut accéder à un élement en utilisant les indices de la matrice, ou en utilisant les coordonnées de l'élement. Les coordonnées sont des tuples de deux entiers, qui représentent la ligne et la colonne de l'élement dans la matrice.
 
 \pagebreak
 
-Les enfants (\texttt{state.getMoves()}) du jeu sont les configurations de jeu obtenues en déplaçant une carte. Pour obtenir les enfants, on parcourt la matrice de cartes, et on déplace les cartes en respectant les règles du jeu. On obtient ainsi une liste de configurations de jeu, qui sont les enfants de la configuration actuelle. On peut alors utiliser les algorithme de parcours de graphe ou de recherche par heuristique pour trouver la solution.
+\section{GameState}
+Cette classe représente l'état du jeu. Elle nous permet de stocker les cartes. Elle permet aussi de déplacer les cartes, de vérifier si le jeu est terminé, de générer les coups possibles, et d'effectuer toutes les opérations permettant l'intéraction avec le jeu. Elle hérite de la classe \texttt{Matrix}. Les enfants (\texttt{state.getMoves()}) du jeu sont les configurations de jeu obtenues en déplaçant une carte. Pour obtenir les enfants, on parcourt la matrice de cartes, et on déplace les cartes en respectant les règles du jeu. On obtient ainsi une liste de configurations de jeu, qui sont les enfants de la configuration actuelle. On peut alors utiliser les algorithme de parcours de graphe ou de recherche par heuristique pour trouver la solution.
 
 \section{Heuristic}
 Cette classe représente une heuristique. Elle permet de calculer la valeur d'une configuration de jeu. Elle est utilisée par les algorithmes de recherche par heuristique pour trouver la solution.
@@ -43,7 +42,10 @@ Heuristic.combine([
     (2, Heuristic.wrongColumnPlacement)
 ])
 \end{lstlisting}
-Heuristic.combine, prend en paramètre une liste de heuristiques (fonctions prenant une configuration de jeu en paramètre et retournant un nombre) et une liste de poids. Elle retourne une heuristique (une fonction prenant une configuration de jeu en paramètre et retournant un nombre) qui est la somme des heuristiques pondérées.
+
+\pagebreak
+
+\texttt{Heuristic.combine} prend en paramètre une liste d'heuristiques (fonctions prenant une configuration de jeu en paramètre et retournant un nombre) et une liste de poids. Elle retourne une heuristique (une fonction prenant une configuration de jeu en paramètre et retournant un nombre) qui est la somme des heuristiques pondérées.
 
 \section{Statistics}
 Cette classe permet de comparer les algorithmes de recherche par heuristique et les algorithmes de parcours de graphe. Elle permet de:
@@ -51,14 +53,17 @@ Cette classe permet de comparer les algorithmes de recherche par heuristique et 
       \item \texttt{generateGames} \\
             Générer $X$ configurations de jeu aléatoires de taille $M$x$N$.
       \item \texttt{getArrangements} \\
-            Générer tous les arrangements $N$ de nombres dans un intervalle donné, ce qui permet plus tard de tester les poids des heuristiques afin de trouver les plus optimaux.
+            Générer tous les arrangements $N$ de nombres dans un intervalle donné, ce qui permet plus tard de tester les poids des heuristiques afin de trouver les plus performants.
       \item \texttt{findBestWeights} \\
-            Met en competition les differentes heuristique  générées avec les poids passées en paramètre en utilisant A*, ce qui nous permet de determiner les poids générant l'heuristique la plus performante.
-      \item \texttt{getPeformances} \\
-            On donne $N$ jeux et différents algorithme et nous renvoit un rapport sur l'execution des algorithme sur ces jeux afin de connaître le plus performant.
-      \item \texttt{executeAlgorithms} \\
-            Execute plusieurs algorithme sur un jeu donné et revoit un rapport de l'execution.
+            Met en competition les differentes heuristiques générées avec les poids passés en paramètre en utilisant A*, ce qui nous permet de determiner les poids générant l'heuristique la plus performante.
+      \item \texttt{executeAlgorithmsOnMultipleGames} \\
+            On donne $N$ jeux et différents algorithmes et nous renvoit un rapport sur l'execution des algorithmes sur ces jeux afin de connaître le plus performant.
+      \item \texttt{executeAlgorithmsOnOneGame} \\
+            Execute plusieurs algorithmes sur un jeu donné et revoit un rapport de l'exécution.
 \end{itemize}
 
 \section{Heuristics.playground}
-Le fichier \texttt{Heuristics.playground} va permettre d'utiliser la classe \texttt{Statistics} afin d'effectuer des analyse d'heuristiques et des parcours de graphe. Il peut être améliorer afin d'afficher le composant graphique \texttt{StatUI} et d'effectuer l'animation de parcours des algorithmes comme sur l'application SwiftUI. On peut également l'utiliser pour faire un rapport en bonne et dû forme avec nos résultats.
+Le fichier \texttt{Heuristics.playground} va permettre d'utiliser la classe \texttt{Statistics} afin d'effectuer des analyses d'heuristiques et des parcours de graphe. Il peut être amélioré afin d'afficher le composant graphique \texttt{StatUI} et d'effectuer l'animation de parcours des algorithmes comme sur l'application SwiftUI. On peut également l'utiliser pour faire un rapport en bonne et due forme avec nos résultats.
+
+\section{Documentation}
+Vous pouvez générez la documentation du projet en utilisant XCode. Pour cela allez dans \texttt{Product} -> \texttt{Build Documentation}. La documentation est générée via les commentaires de code.
