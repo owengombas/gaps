@@ -65,7 +65,7 @@ Cela signifie que l'heuristique 1 est la plus importante, l'heuristique 2 est la
 Une piste d'amélioration serait de faire varier les sous-poids de la deuxième heuristique avec \texttt{stuckByMaxRankWeight} et \texttt{stuckByGapWeight}. On peut le faire de la façon suivante:
 \begin{lstlisting}
 let heuristics = [
-Heuristic.countMisplacedCards,
+    Heuristic.countMisplacedCards,
     Heuristic.stuckGaps(stuckByGapWeight: 0),
     Heuristic.stuckGaps(stuckByMaxRankWeight: 0),
     Heuristic.wrongColumnPlacement
