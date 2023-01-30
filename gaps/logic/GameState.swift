@@ -601,15 +601,15 @@ class GameState: Matrix<Card?>, Hashable {
                         count += 1
                     }
 
-                    break
+                    continue
                 }
 
                 if card!.suit != firstCard!.suit {
-                    break
+                    continue
                 }
 
                 if card!.rank.rawValue != column {
-                    break
+                    continue
                 }
 
                 count += 1
