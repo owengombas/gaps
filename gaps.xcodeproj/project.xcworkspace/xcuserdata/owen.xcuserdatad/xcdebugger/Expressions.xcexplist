@@ -41,6 +41,17 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "GameState.countMisplacedCards():GameState.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.columns - 1">
+            </PersistentString>
+            <PersistentString
+               value = "card?.description">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "GameState.aStarSearch():GameState.swift">
          <PersistentStrings>
             <PersistentString

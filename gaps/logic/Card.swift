@@ -10,7 +10,7 @@ import Foundation
 /**
  A card data structure
  */
-class Card: CustomStringConvertible {
+class Card: CustomStringConvertible, Hashable {
     private var _rank: CardRank
     private var _suit: CardSuit
     
@@ -112,5 +112,13 @@ class Card: CustomStringConvertible {
             self.rank.rawValue == to?.rank.rawValue ?? 0 + 1 &&
             self.suit == to?.suit
         )
+    }
+    static func ==(lhs: Card, rhs: Card) -> Bool {
+        return lhs.isEquals(to: rhs)
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self._rank)
+        hasher.combine(self._suit)
     }
 }

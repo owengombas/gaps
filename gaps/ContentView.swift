@@ -376,6 +376,9 @@ struct ContentView: View {
 
         if isOkay {
             self._bestState.copy(from: self._state)
+            self._columns = self._state.columns
+            self._rows = self._state.rows
+            self._seed = self._state.seed
         } else {
             self.writeLog()
             self.writeLog(logs: "Wrong seed format", lineReturn: false)

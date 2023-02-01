@@ -178,6 +178,12 @@ class GameState: Matrix<Card?>, Hashable {
         s.setElements(value: { (i, j, _, _) in
             return self.getElement(column: i, row: j)
         })
+        
+        s.parent = self._parent
+        s._removedCards = self._removedCards
+        s._gScore = self.gScore
+        s._fScore = self._fScore
+        s._hScore = self._hScore
 
         return s
     }
@@ -190,6 +196,9 @@ class GameState: Matrix<Card?>, Hashable {
 
         self._removedCards = from.removedCards
         self._parent = from.parent
+        self._gScore = from.gScore
+        self._fScore = from._fScore
+        self._hScore = from._hScore
     }
 
     /**
@@ -308,8 +317,25 @@ class GameState: Matrix<Card?>, Hashable {
         }
         
         self.copy(from: tempState)
+
+        self._removedCards = tempState.findMissingCards()
         
         return true
+    }
+
+    /**
+     Find the missing cards in the game, what cards are the ones that are not in the game (gaps)
+     - Returns: the missing cards
+     */
+    func findMissingCards() -> [Card] {
+        let currentSet: Set<Card?> = Set(self.cards)
+        var fullSet: Set<Card?> = Set(GameState(columns: self.columns, rows: self.rows).cards)
+
+        for card in currentSet {
+            fullSet.remove(card)
+        }
+
+        return Array(fullSet.map { $0! })
     }
 
     /**
@@ -582,33 +608,35 @@ class GameState: Matrix<Card?>, Hashable {
     func countMisplacedCards() -> Int {
         var count = 0
 
+        // If the game didn't start yet, then there's no gap, so no misplaced card for them
+        if self.removedCards.count <= 0 {
+            count += self.rows
+        }
+
         for row in 0..<self.rows {
-            let firstCard: Card? = self.getElement(column: 0, row: row)
-            if firstCard === nil {
-                continue
+            // If last card is a gap then +1, but only if the game started and that there's a removed card
+            if self.removedCards.count > 0 {
+                let lastCard: Card? = self.getElement(column: self.columns - 1, row: row)
+                if lastCard === nil {
+                    count += 1
+                }
             }
 
-            if firstCard!.rank != .ACE {
+            // If first card is an ace, skip the row
+            let firstCard: Card? = self.getElement(column: 0, row: row)
+            if firstCard?.rank != .ACE {
                 continue
             }
             count += 1
 
-            for column in 1..<self.columns {
+            for column in 1..<self.columns-1 {
                 let card: Card? = self.getElement(column: column, row: row)
-
-                if card === nil {
-                    if column >= self.columns - 1 {
-                        count += 1
-                    }
-
+                
+                if card?.suit != firstCard?.suit {
                     continue
                 }
 
-                if card!.suit != firstCard!.suit {
-                    continue
-                }
-
-                if card!.rank.rawValue != column {
+                if card?.rank.rawValue != column {
                     continue
                 }
 
