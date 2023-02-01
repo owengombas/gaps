@@ -52,7 +52,7 @@ class Heuristic {
                     return
                 }
 
-                if prevCard?.rank == maxRank {
+                if prevCard?.rank == maxRank && i < state.columns - 1 {
                     stuckGaps.insert(c)
                     stuckByMaxRank += 1
                     return
