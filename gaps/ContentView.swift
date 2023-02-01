@@ -17,9 +17,9 @@ struct ContentView: View {
      The heuristic used for A*
      */
     private static let _h = Heuristic.compose([
-        (5, Heuristic.countMisplacedCards),
-        (1, Heuristic.stuckGaps()),
-        (4, Heuristic.wrongColumnPlacement)
+        (4, Heuristic.countMisplacedCards),
+        (5, Heuristic.stuckGaps()),
+        (2, Heuristic.wrongColumnPlacement)
     ])
     
     /**
@@ -228,7 +228,7 @@ struct ContentView: View {
 
             let onBetterStateFound: (GameState, Int) -> Void = { state, closedCount in
                 let misplacedCards = state.countMisplacedCards()
-                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards (hScore: \(state.hScore), gScore: \(state.gScore), fScore: \(state.fScore))")
+                self.writeLog(logs: "Better state found with \(misplacedCards) misplaced cards (hScore: \(state.hScore), gScore: \(state.gScore), fScore: \(state.fScore)), seed: \(state.seed)")
                 self._betterStateFoundOverClosedNodes.append(Measure(x: Double(closedCount), y: Double(misplacedCards), z: name))
                 self._tempBestState.copy(from: state)
             }
